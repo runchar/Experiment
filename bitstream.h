@@ -19,12 +19,20 @@ protected :
     storage_type bitset[1000];
     // storage_pointer bitset=storage_bitset;
 public:
-        bits(){
+/*
+constructors
+1. default constructor
+2. ULL constructor
+3. string constructor
+4. copy constructor
+5. destructor
+*/
+        bits(){ //fault constructor
             SizeOfBit=0;
             SizeOfType=1;
          }
-        //fault constructor
-        bits( ULL n ){
+       
+        bits( ULL n ){ //ULL constructor
             SizeOfBit=sizeof(ULL)*8;
             SizeOfType=(SizeOfBit-1)/length+1;
             for(ULL i=0;i<SizeOfType;i++)
@@ -40,8 +48,8 @@ public:
                 }
             }
         }
-        //ULL constructor
-        bits( const char* s , size_t n , char zero , char one ){
+
+        bits( const char* s , size_t n , char zero , char one ){    //string constructor
             // SizeOfBit=((n-1)/length+1)*length;
             SizeOfBit=n;//special because string length may be not multiple of 64
             SizeOfType=(SizeOfBit-1)/length+1;
@@ -71,40 +79,31 @@ public:
             if(BitsCnt!=n)
                 throw "wrong_length";
         }
-        //string constructor
-
-        bits( const BitSet ::bits &y)=default;
-
-        bits& operator=(const BitSet ::bits &y){
-            if(this==&y)
-                return *this;
+        
+        //copy constructor
+        bits( const BitSet ::bits &y){
             SizeOfBit=y.SizeOfBit;
             SizeOfType=y.SizeOfType;
             for(ULL i=0;i<SizeOfType;i++)
             {
                 bitset[i]=y.bitset[i];
             }
-            return *this;
         }
 
-        ~bits(){
-            //delete[] bitset;
-        }   
+        ~bits()=default; 
 
-        bool test(size_t p){
+/*--------------------------------------------------------------------*/
+
+/*
+member functions
+*/
+
+        bool test(size_t p)const {//compare with [] ,test is read only
             if(p>=SizeOfBit)
                 throw "beyond";
             else
                 return (bitset[p/length] & (size_t(1)<<(p%length)));
         }
-
-        bool operator[](size_t p){
-            if(p>=SizeOfBit)
-                throw "beyond";
-            else
-                return (bitset[p/length] & (size_t(1)<<(p%length)));
-        }
-        //impletment by overload [] , same with `test`
 
         size_t count(){
             size_t cnt=0;
@@ -198,12 +197,24 @@ public:
             //if(SizeOfBit!=y.SizeOfBit||SizeOfType!=y.SizeOfType)
             //    throw "different_size";// why throw exception cause runtime error
                 //return false;
-            for(ULL i=0;i<SizeOfType;i++)/// !!!compare with B may compare uesless bits
-            {
+            for(ULL i=0;i<SizeOfType;i++)   // !!!compare with B may compare uesless bits
+            {                               // has been solved ^_^
                 if(bitset[i]!=y.bitset[i])
                     return false;
             }
             return true;
+        }
+
+        std::string to_string() const {
+            std::string s;
+            for(ULL i=0;i<SizeOfBit;i++)
+            {
+                if(test(i))
+                    s.push_back('1');
+                else
+                    s.push_back('0');
+            }
+            return s;
         }
 
         void print(){
@@ -222,6 +233,35 @@ public:
             std::cout<<std::endl;
         }
         //check 
+/*-----------------------------------------------------------------------*/
+/*
+here is some overload operator
+`=` is been overload
+&= |= ^= <<= >>= is self-assignment operator
+`<=>`  could implement  other compare operator
+*/
+
+        // [] get bit in position p
+        // you should inplement & later!!!!
+        bool operator[](size_t p){
+            if(p>=SizeOfBit)
+                throw "beyond";
+            else
+                return (bitset[p/length] & (size_t(1)<<(p%length)));
+        }
+
+        //overload operator= 
+        bits& operator=(const BitSet ::bits &y){
+            if(this==&y)
+                return *this;
+            SizeOfBit=y.SizeOfBit;
+            SizeOfType=y.SizeOfType;
+            for(ULL i=0;i<SizeOfType;i++)
+            {
+                bitset[i]=y.bitset[i];
+            }
+            return *this;
+        }
 
         bits& operator&=(const BitSet::bits& y){
             if(SizeOfBit!=y.SizeOfBit||SizeOfType!=y.SizeOfType)
@@ -284,19 +324,24 @@ public:
             return *this;
         }
         
-        //friend functions
+/*
+some friend functions 
+some function need be implemented out of class
+
+*/
         friend std::strong_ordering operator <=>(const bits& x , const bits& y);
     };
 
     std::strong_ordering operator <=>(const bits& x , const bits& y){
-        if(x.SizeOfBit!=y.SizeOfBit||x.SizeOfType!=y.SizeOfType)
-            throw "different_size";
-        for(ULL i=0;i<x.SizeOfType;i++)
-        {
-            if(x.bitset[i]!=y.bitset[i])
-                return std::strong_ordering::less;
-        }
-        return std::strong_ordering::equal;
+        //wait to be implemented
+        std::string compare_temp_x=x.to_string();
+        std::string compare_temp_y=y.to_string();
+        if(compare_temp_x==compare_temp_y)
+            return std::strong_ordering::equal;
+        else if(compare_temp_x>compare_temp_y)
+            return std::strong_ordering::greater;
+        else
+            return std::strong_ordering::less;
     }
 }
 

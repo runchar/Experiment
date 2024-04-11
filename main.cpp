@@ -11,21 +11,18 @@ int main(){
         a.print();
         a<<=20;
         a.print();
-        BitSet::bits b(bb,9,'0','1');
+        BitSet::bits b(a);
         b=a;
         b.print();
         b>>=2;
         b<<=1;
         b.print();
-        std::cout<<a.compare(b)<<std::endl;
-        return 0;
-        auto temp=b.filp(3);
-        b.print();
-        auto temp2=temp.set();
-        b.print();
-        auto temp3=temp2.reset();
-        b.print();
-        std::cout<<temp3.compare(b)<<std::endl;
+        std::cout<<"string"<<std::endl;
+        std::cout<<b.to_string()<<std::endl<<a.to_string()<<std::endl;
+        std::cout<<(b.to_string()>a.to_string())<<std::endl;
+        std::cout<<(a<b)<<std::endl;
+        std::cout<<(a>b)<<std::endl;
+        std::cout<<(a<=b)<<std::endl;
     } catch (const char* msg) {
         std::cerr << "Exception caught: " << msg << std::endl;
     }
