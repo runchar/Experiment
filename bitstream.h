@@ -1,6 +1,10 @@
 #ifndef CSTRING
 #include <cstring>
+#include <string>
 #endif 
+
+#include <compare>
+#include <algorithm>
 
 namespace BitSet{
     using storage_type = size_t;
@@ -12,20 +16,17 @@ protected :
     const ULL length=sizeof(storage_type)*8;  //length of storage_type in bits
     ULL SizeOfType=0;  //size of storage_type
     size_t SizeOfBit;  //size of bitset in bits// uesd to judge if beyond
-    storage_pointer bitset=nullptr;
+    storage_type bitset[1000];
+    // storage_pointer bitset=storage_bitset;
 public:
         bits(){
             SizeOfBit=0;
             SizeOfType=1;
-            bitset = new storage_type[SizeOfType];
-            memset(bitset,0,SizeOfType*sizeof(storage_type));
          }
         //fault constructor
         bits( ULL n ){
             SizeOfBit=sizeof(ULL)*8;
             SizeOfType=(SizeOfBit-1)/length+1;
-            bitset = new storage_type[SizeOfType];
-            memset(bitset,0,SizeOfType*sizeof(storage_type));
             for(ULL i=0;i<SizeOfType;i++)
             {
                 for(ULL j=0;j<length;j++)
@@ -33,24 +34,9 @@ public:
                     if(i*length+j>=sizeof(ULL))
                         break;
                     if(n & (1<<(i*length+j)))
-                        bitset[i]=bitset[i] | (1ull<<j);
+                        bitset[i]=bitset[i] | (size_t(1)<<j);
                     else
-                        bitset[i]=bitset[i] & ~(1ull<<j);
-
-            // std::cout<<SizeOfBit<<" "<<length<<std::endl;
-            // for(ULL i=0;i<SizeOfType;i++)
-            // {
-            //     for(ULL j=0;j<length;j++)
-            //     {
-            //         if(i*length+j>=SizeOfBit)
-            //             break;
-            //         if(bitset[i] & (1ull<<j))
-            //             std::cout<<1;
-            //         else
-            //             std::cout<<0;
-            //     }
-            // }
-            // std::cout<<std::endl;
+                        bitset[i]=bitset[i] & ~(size_t(1)<<j);
                 }
             }
         }
@@ -59,8 +45,6 @@ public:
             // SizeOfBit=((n-1)/length+1)*length;
             SizeOfBit=n;//special because string length may be not multiple of 64
             SizeOfType=(SizeOfBit-1)/length+1;
-            bitset = new storage_type[SizeOfType];
-            memset(bitset,0,SizeOfType*sizeof(storage_type));
             size_t BitsCnt=0;
             for(ULL i=0;i<SizeOfType;i++)
             {
@@ -70,11 +54,11 @@ public:
                         break;
                     if(s[i*length+j]==zero)
                     {
-                        bitset[i]=bitset[i] & ~(1ull<<j);
+                        bitset[i]=bitset[i] & ~(size_t(1)<<j);
                     }
                     else if(s[i*length+j]==one)
                     {
-                        bitset[i]=bitset[i] | (1ull<<j);
+                        bitset[i]=bitset[i] | (size_t(1)<<j);
                     }
                     else
                     {
@@ -89,22 +73,36 @@ public:
         }
         //string constructor
 
+        bits( const BitSet ::bits &y)=default;
+
+        bits& operator=(const BitSet ::bits &y){
+            if(this==&y)
+                return *this;
+            SizeOfBit=y.SizeOfBit;
+            SizeOfType=y.SizeOfType;
+            for(ULL i=0;i<SizeOfType;i++)
+            {
+                bitset[i]=y.bitset[i];
+            }
+            return *this;
+        }
+
         ~bits(){
-            delete[] bitset;
+            //delete[] bitset;
         }   
 
         bool test(size_t p){
             if(p>=SizeOfBit)
                 throw "beyond";
             else
-                return (bitset[p/length] & (1ull<<(p%length)));
+                return (bitset[p/length] & (size_t(1)<<(p%length)));
         }
 
         bool operator[](size_t p){
             if(p>=SizeOfBit)
                 throw "beyond";
             else
-                return (bitset[p/length] & (1ull<<(p%length)));
+                return (bitset[p/length] & (size_t(1)<<(p%length)));
         }
         //impletment by overload [] , same with `test`
 
@@ -112,9 +110,9 @@ public:
             size_t cnt=0;
             for(ULL i=0;i<SizeOfBit;i++)
             {
-                // if(bitset[i/length] & (1ull<<(i%length)))
+                // if(bitset[i/length] & (size_t(1)<<(i%length)))
                 //     cnt++;
-                if(this->operator[](i)) //another way to implement by using `this` pointer
+                if(this->operator[](i)) //anotherd way to implement by using `this` pointer
                     cnt++;              //`this` point to the object itself
             }
             return cnt;
@@ -151,6 +149,12 @@ public:
             {
                 bitset[i]=~bitset[i];
             }
+
+            for(long long i=SizeOfType*length-1;i>=(long long)SizeOfBit;i--)// solve :  rest unues bits was filped
+            {
+                if(test(i))
+                    filp(i);
+            }
             return *this;
         }
 
@@ -161,9 +165,9 @@ public:
             else
             {
                 if(this->operator[](p))
-                    bitset[p/length]=bitset[p/length] & ~(1ull<<(p%length));//set 0
+                    bitset[p/length]=bitset[p/length] & ~(size_t(1)<<(p%length));//set 0
                 else
-                    bitset[p/length]=bitset[p/length] | (1ull<<(p%length));//set 1
+                    bitset[p/length]=bitset[p/length] | (size_t(1)<<(p%length));//set 1
             }
             return *this;
         }
@@ -171,7 +175,13 @@ public:
         bits& set(){
             for(ULL i=0;i<SizeOfType;i++)
             {
-                bitset[i]=~0;
+                bitset[i]=~size_t(0);
+            }
+
+            for(long long i=SizeOfType*length-1;i>=(long long)SizeOfBit;i--)// solve :  rest unues bits was filped
+            {
+                if(test(i))
+                    filp(i);
             }
             return *this;
         }
@@ -184,10 +194,11 @@ public:
             return *this;
         }
         
-        bool compare(const bits& y){
-            if(SizeOfBit!=y.SizeOfBit||SizeOfType!=y.SizeOfType)
-                throw "different_size";
-            for(ULL i=0;i<SizeOfType;i++)
+        bool compare(const bits& y) const {
+            //if(SizeOfBit!=y.SizeOfBit||SizeOfType!=y.SizeOfType)
+            //    throw "different_size";// why throw exception cause runtime error
+                //return false;
+            for(ULL i=0;i<SizeOfType;i++)/// !!!compare with B may compare uesless bits
             {
                 if(bitset[i]!=y.bitset[i])
                     return false;
@@ -202,7 +213,7 @@ public:
                 {
                     if(i*length+j>=SizeOfBit)
                         break;
-                    if(bitset[i] & (1ull<<j))
+                    if(bitset[i] & (size_t(1)<<j))
                         std::cout<<1;
                     else
                         std::cout<<0;
@@ -211,8 +222,85 @@ public:
             std::cout<<std::endl;
         }
         //check 
+
+        bits& operator&=(const BitSet::bits& y){
+            if(SizeOfBit!=y.SizeOfBit||SizeOfType!=y.SizeOfType)
+                throw "different_size";
+            for(ULL i=0;i<SizeOfType;i++)
+            {
+                bitset[i]=bitset[i] & y.bitset[i];
+            }
+            return *this;
+        }
+
+        bits& operator|=(const BitSet::bits& y){
+            if(SizeOfBit!=y.SizeOfBit||SizeOfType!=y.SizeOfType)
+                throw "different_size";
+            for(ULL i=0;i<SizeOfType;i++)
+            {
+                bitset[i]=bitset[i] | y.bitset[i];
+            }
+            return *this;
+        }
+
+        bits& operator^=(const BitSet::bits& y){
+            if(SizeOfBit!=y.SizeOfBit||SizeOfType!=y.SizeOfType)
+                throw "different_size";
+            for(ULL i=0;i<SizeOfType;i++)
+            {
+                bitset[i]=bitset[i] ^ y.bitset[i];
+            }
+            return *this;
+        }
+        bits& operator<<=(size_t n){
+            if(n>=SizeOfBit)
+                this->reset();
+            for(long long i=n;i<(long long)SizeOfBit;i++)
+            {
+                if(test(i)!=test(i-n))
+                    filp(i-n);
+            }
+            for(long long i=SizeOfBit-1,boundary_temp=(long long)SizeOfBit-n;i>=boundary_temp;i--)
+            {
+                if(test(i))
+                    filp(i);
+            }
+            return *this;
+        }
+
+        bits& operator>>=(size_t n){
+            if(n>=SizeOfBit)
+                this->reset();
+            for(long long i=SizeOfBit-n-1;i>=0;i--)
+            {
+                if(test(i)!=test(i+n))
+                    filp(i+n);
+            }
+            for(long long i=0;i<(long long)n;i++)
+            {
+                if(test(i))
+                    filp(i);
+            }
+            return *this;
+        }
+        
+        //friend functions
+        friend std::strong_ordering operator <=>(const bits& x , const bits& y);
     };
+
+    std::strong_ordering operator <=>(const bits& x , const bits& y){
+        if(x.SizeOfBit!=y.SizeOfBit||x.SizeOfType!=y.SizeOfType)
+            throw "different_size";
+        for(ULL i=0;i<x.SizeOfType;i++)
+        {
+            if(x.bitset[i]!=y.bitset[i])
+                return std::strong_ordering::less;
+        }
+        return std::strong_ordering::equal;
+    }
 }
 
 
 // class A:public BitStream::bits{ };
+        //copy constructor
+        //compare 
