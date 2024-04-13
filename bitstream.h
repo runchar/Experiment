@@ -30,10 +30,12 @@ constructors
         bits(){ //fault constructor
             SizeOfBit=0;
             SizeOfType=1;
+            memset(bitset,0,sizeof(bitset));
          }
        
-        bits( ULL n ){ //ULL constructor
-            SizeOfBit=sizeof(ULL)*8;
+        bits( ULL n ,size_t Size){ //ULL constructor
+            memset(bitset,0,sizeof(bitset));
+            SizeOfBit=Size;
             SizeOfType=(SizeOfBit-1)/length+1;
             for(ULL i=0;i<SizeOfType;i++)
             {
@@ -41,16 +43,18 @@ constructors
                 {
                     if(i*length+j>=sizeof(ULL))
                         break;
-                    if(n & (1<<(i*length+j)))
+                    if(n & 1)
                         bitset[i]=bitset[i] | (size_t(1)<<j);
                     else
                         bitset[i]=bitset[i] & ~(size_t(1)<<j);
+                    n>>=1;
                 }
             }
         }
 
         bits( const char* s , size_t n , char zero , char one ){    //string constructor
             // SizeOfBit=((n-1)/length+1)*length;
+            memset(bitset,0,sizeof(bitset));
             SizeOfBit=n;//special because string length may be not multiple of 64
             SizeOfType=(SizeOfBit-1)/length+1;
             size_t BitsCnt=0;
@@ -60,11 +64,11 @@ constructors
                 {
                     if(i*length+j>=n)
                         break;
-                    if(s[i*length+j]==zero)
+                    if(s[n-i*length-j-1]==zero)
                     {
                         bitset[i]=bitset[i] & ~(size_t(1)<<j);
                     }
-                    else if(s[i*length+j]==one)
+                    else if(s[n-i*length-j-1]==one)
                     {
                         bitset[i]=bitset[i] | (size_t(1)<<j);
                     }
@@ -99,9 +103,9 @@ member functions
 */
 
         bool test(size_t p)const {//compare with [] ,test is read only
-            if(p>=SizeOfBit)
-                throw "beyond";
-            else
+            // if(p>=SizeOfBit)
+            //     throw "beyond";
+            // else
                 return (bitset[p/length] & (size_t(1)<<(p%length)));
         }
 
@@ -159,11 +163,14 @@ member functions
 
         bits& filp(size_t p)
         {
-            if(p>=SizeOfBit)
-                throw "beyond";
-            else
+            //temporarily not check if p is beyond
+            //after & implement, check if p is beyond
+
+            // if(p>=SizeOfBit)
+            //     throw "beyond";
+            // else
             {
-                if(this->operator[](p))
+                if(test(p))
                     bitset[p/length]=bitset[p/length] & ~(size_t(1)<<(p%length));//set 0
                 else
                     bitset[p/length]=bitset[p/length] | (size_t(1)<<(p%length));//set 1
@@ -203,11 +210,12 @@ member functions
                     return false;
             }
             return true;
+            //I think it has no ues
         }
 
         std::string to_string() const {
             std::string s;
-            for(ULL i=0;i<SizeOfBit;i++)
+            for(long long i=SizeOfBit-1;i>=0;i--)
             {
                 if(test(i))
                     s.push_back('1');
@@ -218,17 +226,13 @@ member functions
         }
 
         void print(){
-            for(ULL i=0;i<SizeOfType;i++)
+            for(size_t i=0;i<SizeOfBit;i++)
             {
-                for(ULL j=0;j<length;j++)
-                {
-                    if(i*length+j>=SizeOfBit)
-                        break;
-                    if(bitset[i] & (size_t(1)<<j))
-                        std::cout<<1;
-                    else
-                        std::cout<<0;
-                }
+                if(test(i))
+                    std::cout<<1;
+                else
+                    std::cout<<0;
+                // std::cout<<std::endl;
             }
             std::cout<<std::endl;
         }
@@ -292,9 +296,12 @@ here is some overload operator
             }
             return *this;
         }
-        bits& operator<<=(size_t n){
+        bits& operator>>=(size_t n){
             if(n>=SizeOfBit)
+            {
                 this->reset();
+                return *this;
+            }
             for(long long i=n;i<(long long)SizeOfBit;i++)
             {
                 if(test(i)!=test(i-n))
@@ -308,9 +315,13 @@ here is some overload operator
             return *this;
         }
 
-        bits& operator>>=(size_t n){
+        bits& operator<<=(size_t n){
             if(n>=SizeOfBit)
+            {
                 this->reset();
+                return *this;
+            }
+                
             for(long long i=SizeOfBit-n-1;i>=0;i--)
             {
                 if(test(i)!=test(i+n))
@@ -324,15 +335,28 @@ here is some overload operator
             return *this;
         }
         
+        bool operator==(const BitSet::bits& y)const{
+            return *this<=>y==0;
+        }
+
+        bool operator!=(const BitSet::bits& y)const{
+            return *this<=>y!=0;
+        }
 /*
 some friend functions 
 some function need be implemented out of class
 
 */
         friend std::strong_ordering operator <=>(const bits& x , const bits& y);
+        friend bits operator << ( const bits& _a , const size_t b );
+        friend bits operator >> ( const bits& _a , const size_t b );
+        friend bits operator | ( const bits& _a , const bits& _b );
+        friend bits operator & ( const bits& _a , const bits& _b );
+        friend bits operator ^ ( const bits& _a , const bits& _b );
+        friend bits operator ~ ( const bits& _a );
     };
 
-    std::strong_ordering operator <=>(const bits& x , const bits& y){
+    std::strong_ordering operator <=>(const bits& x , const bits& y) {
         //wait to be implemented
         std::string compare_temp_x=x.to_string();
         std::string compare_temp_y=y.to_string();
@@ -343,9 +367,49 @@ some function need be implemented out of class
         else
             return std::strong_ordering::less;
     }
+    
+    std::ostream& operator<<(std::ostream& out, const bits& _bit){
+        std::string s=_bit.to_string();
+        out<<s;
+        return out;
+    }
+
+    bits operator << ( const bits& _a , const size_t b ){
+        bits temp=_a;
+        temp<<=b;
+        return temp;
+    }
+
+    bits operator >> ( const bits& _a , const size_t b ){
+        bits temp=_a;
+        temp>>=b;
+        return temp;
+    }
+
+    bits operator | ( const bits& _a , const bits& _b ){
+        bits temp=_a;
+        temp|=_b;
+        return temp;
+    }
+
+    bits operator & ( const bits& _a , const bits& _b ){
+        bits temp=_a;
+        temp&=_b;
+        return temp;
+    }
+
+    bits operator ^ ( const bits& _a , const bits& _b ){
+        bits temp=_a;
+        temp^=_b;
+        return temp;
+    }
+
+    bits operator ~ ( const bits& _a ){
+        bits temp=_a;
+        temp.filp();
+        return temp;
+    }
 }
 
-
-// class A:public BitStream::bits{ };
-        //copy constructor
-        //compare 
+// []  &
+// constructor (ULL)
