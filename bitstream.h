@@ -28,8 +28,8 @@ constructors
 5. destructor
 */
         bits(){ //fault constructor
-            SizeOfBit=0;
-            SizeOfType=1;
+            SizeOfBit=500;
+            SizeOfType=(SizeOfBit-1)/length+1;
             memset(bitset,0,sizeof(bitset));
          }
        
@@ -41,7 +41,7 @@ constructors
             {
                 for(ULL j=0;j<length;j++)
                 {
-                    if(i*length+j>=sizeof(ULL))
+                    if(i*length+j>=SizeOfBit)
                         break;
                     if(n & 1)
                         bitset[i]=bitset[i] | (size_t(1)<<j);
@@ -51,11 +51,11 @@ constructors
                 }
             }
         }
-
-        bits( const char* s , size_t n , char zero , char one ){    //string constructor
+ 
+        bits( const char* s , size_t n ,size_t len, char zero , char one ){    //string constructor
             // SizeOfBit=((n-1)/length+1)*length;
             memset(bitset,0,sizeof(bitset));
-            SizeOfBit=n;//special because string length may be not multiple of 64
+            SizeOfBit=len;//special because string length may be not multiple of 64
             SizeOfType=(SizeOfBit-1)/length+1;
             size_t BitsCnt=0;
             for(ULL i=0;i<SizeOfType;i++)
@@ -80,10 +80,10 @@ constructors
                 }
                 
             }
-            if(BitsCnt!=n)
-                throw "wrong_length";
+            // if(BitsCnt!=n)
+            //     throw "wrong_length";
         }
-        
+
         //copy constructor
         bits( const BitSet ::bits &y){
             SizeOfBit=y.SizeOfBit;
@@ -115,8 +115,10 @@ member functions
             {
                 // if(bitset[i/length] & (size_t(1)<<(i%length)))
                 //     cnt++;
-                if(this->operator[](i)) //anotherd way to implement by using `this` pointer
-                    cnt++;              //`this` point to the object itself
+                // if(this->operator[](i)) //anotherd way to implement by using `this` pointer
+                    // cnt++;              //`this` point to the object itself
+                if(test(i))
+                    cnt++;
             }
             return cnt;
         }
