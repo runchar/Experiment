@@ -1,9 +1,12 @@
 bitset_s a abbbabaabbabbbbbaaaabbabababbabbbaaaaabababbbabbababbabababbbabaaaaaabbbbababbbbaaaaaaaaababbbabbabbababbababbababbaaaaabbababbbbbbbbaaabaaba a b
 bitset b
 bitset_u c 3928492
+bitset_u d 3928492
 test a
 test b
 test c
+EQ d c 
+EQ c d 
 count a 
 count b
 count c
@@ -35,7 +38,7 @@ test b
 NOT  a
 test b
 
-LESS a c 
+LE a c 
 EQ a c 
 GR a c 
 

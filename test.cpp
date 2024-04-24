@@ -2,7 +2,6 @@
 #include <compare> // Include the <compare> header to access the 'strong_ordering' type
 #include <iostream>
 #include <map>
-#include "bitstream.h"
 
 const int N = 500;
 // using bits_type = std::bitset<500>;
@@ -41,6 +40,7 @@ int main()
     freopen("in.txt", "r", stdin);
     // std::cout<<"hello"<<std::endl;
     std::string op;
+    int cnt=0;
     while( std::cin >> op ) {
         // Part 1
         std::string x;
@@ -104,18 +104,21 @@ int main()
             std::string a,b;
             std::cin>>a>>b;
             M[x]=M[a]^M[b];
+            // std::cout<<M[a]<<std::endl;
+            // std::cout<<M[b]<<std::endl;
+            // std::cout<<M[x]<<std::endl;
         }
         if(op=="LSS")
         {
             std::string a;
-            int b;
+            size_t b;
             std::cin>>a>>b;
             M[x]=M[a]<<b;
         }
         if(op=="RSS")
         {
             std::string a;
-            int b;
+            size_t b;
             std::cin>>a>>b;
             M[x]=M[a]>>b;
         }
@@ -153,7 +156,7 @@ int main()
             auto temp=~M[x];
             std::cout<<temp<<std::endl;
         }
-        if(op=="LESS")
+        if(op=="LE")
         {
             std::string a,b;
             std::cin>>b;
@@ -171,6 +174,7 @@ int main()
             std::cin>>b;
             std::cout<<(M[x].to_string()>M[b].to_string())<<std::endl;
         }
+        // std::cout<<++cnt<<std::endl;
     }
     return 0;
 }
