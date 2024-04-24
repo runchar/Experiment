@@ -10,7 +10,7 @@
 
 
 const int N = 500;
-using bits_type = BitSet::bits;
+using bits_type = BitSet::bits<500>;
 //using bits_type = std::bitset<N>;
 std::map<std::string, bits_type> M;
 
@@ -19,14 +19,14 @@ std::map<std::string, bits_type> M;
 void check(){
         try
     {
-        BitSet::bits a(3928492, 500);
+        BitSet::bits <500> a(3928492);
         std::cout << a << std::endl;
         return;
         std::cout << a << std::endl;
         a.operator<<=(2);
         std::cout << a << std::endl;
         std::cout << a.to_string() << std::endl;
-        BitSet::bits aa("11111110", 8, 500, '0', '1');
+        BitSet::bits <500> aa("11111110", 8, '0', '1');
         std::cout << aa << std::endl;
         aa.operator<<=(2);
         std::cout << aa << std::endl;
@@ -70,12 +70,13 @@ int main()
         if( op == "bitset_s" ) {
             std::string s; char z , o;
             std::cin >> s >> z >> o;
-            M[x] = bits_type( s.c_str() , s.length() ,500, z , o );
+            auto temp = bits_type( s.c_str() , s.length() , z , o );
+            M[x] = temp;
         }
         if( op == "bitset_u" ) {
             unsigned long long u;
             std::cin >> u;
-            M[x] = bits_type( u,500 );
+            M[x] = bits_type( u );
         }
         if( op == "test" ) {
             std::cout << M[x].to_string() << std::endl;

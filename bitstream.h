@@ -11,9 +11,10 @@ namespace BitSet{
     using storage_pointer = storage_type *;
     using ULL = unsigned long long; 
 
+    template <size_t N>
     class bits{
 protected :
-    const ULL length=sizeof(storage_type)*8;  //length of storage_type in bits
+    ULL length=sizeof(storage_type)*8;  //length of storage_type in bits
     ULL SizeOfType=0;  //size of storage_type
     size_t SizeOfBit;  //size of bitset in bits// uesd to judge if beyond
     storage_type bitset[1000];
@@ -27,15 +28,17 @@ constructors
 4. copy constructor
 5. destructor
 */
+         
         bits(){ //fault constructor
-            SizeOfBit=500;
+            SizeOfBit=N;
             SizeOfType=(SizeOfBit-1)/length+1;
             memset(bitset,0,sizeof(bitset));
          }
        
-        bits( ULL n ,size_t Size){ //ULL constructor
+         
+        bits ( ULL n ){ //ULL constructor
             memset(bitset,0,sizeof(bitset));
-            SizeOfBit=Size;
+            SizeOfBit=N;
             SizeOfType=(SizeOfBit-1)/length+1;
             for(ULL i=0;i<SizeOfType;i++)
             {
@@ -52,10 +55,11 @@ constructors
             }
         }
  
-        bits( const char* s , size_t n ,size_t len, char zero , char one ){    //string constructor
+         
+        bits ( const char* s , size_t n ,char zero , char one ){    //string constructor
             // SizeOfBit=((n-1)/length+1)*length;
             memset(bitset,0,sizeof(bitset));
-            SizeOfBit=len;//special because string length may be not multiple of 64
+            SizeOfBit=N;//special because string length may be not multiple of 64
             SizeOfType=(SizeOfBit-1)/length+1;
             size_t BitsCnt=0;
             for(ULL i=0;i<SizeOfType;i++)
@@ -85,7 +89,8 @@ constructors
         }
 
         //copy constructor
-        bits( const BitSet ::bits &y){
+         
+        bits ( const bits  &y){
             SizeOfBit=y.SizeOfBit;
             SizeOfType=y.SizeOfType;
             for(ULL i=0;i<SizeOfType;i++)
@@ -94,7 +99,7 @@ constructors
             }
         }
 
-        ~bits()=default; 
+        ~bits ()=default; 
 
 /*--------------------------------------------------------------------*/
 
@@ -149,13 +154,13 @@ member functions
             return true;
         }
 
-        bits& filp(){
+        bits & filp(){
             for(ULL i=0;i<SizeOfType;i++)
             {
                 bitset[i]=~bitset[i];
             }
 
-            for(long long i=SizeOfType*length-1;i>=(long long)SizeOfBit;i--)// solve :  rest unues bits was filped
+            for(long long i=SizeOfType*length-1;i>=(long long)SizeOfBit;i--)// solve :  rest unues bits  was filped
             {
                 if(test(i))
                     filp(i);
@@ -163,7 +168,7 @@ member functions
             return *this;
         }
 
-        bits& filp(size_t p)
+        bits & filp(size_t p)
         {
             //temporarily not check if p is beyond
             //after & implement, check if p is beyond
@@ -180,13 +185,13 @@ member functions
             return *this;
         }
 
-        bits& set(){
+        bits & set(){
             for(ULL i=0;i<SizeOfType;i++)
             {
                 bitset[i]=~size_t(0);
             }
 
-            for(long long i=SizeOfType*length-1;i>=(long long)SizeOfBit;i--)// solve :  rest unues bits was filped
+            for(long long i=SizeOfType*length-1;i>=(long long)SizeOfBit;i--)// solve :  rest unues bits  was filped
             {
                 if(test(i))
                     filp(i);
@@ -194,7 +199,7 @@ member functions
             return *this;
         }
 
-        bits& reset(){
+        bits & reset(){
             for(ULL i=0;i<SizeOfType;i++)
             {
                 bitset[i]=0;
@@ -202,7 +207,7 @@ member functions
             return *this;
         }
         
-        bool compare(const bits& y) const {
+        bool compare(const bits & y) const {
             //if(SizeOfBit!=y.SizeOfBit||SizeOfType!=y.SizeOfType)
             //    throw "different_size";// why throw exception cause runtime error
                 //return false;
@@ -257,7 +262,8 @@ here is some overload operator
         }
 
         //overload operator= 
-        bits& operator=(const BitSet ::bits &y){
+         
+        bits & operator=(const bits &y){
             if(this==&y)
                 return *this;
             SizeOfBit=y.SizeOfBit;
@@ -269,7 +275,8 @@ here is some overload operator
             return *this;
         }
 
-        bits& operator&=(const BitSet::bits& y){
+         
+        bits & operator&=(const bits & y){
             if(SizeOfBit!=y.SizeOfBit||SizeOfType!=y.SizeOfType)
                 throw "different_size";
             for(ULL i=0;i<SizeOfType;i++)
@@ -279,7 +286,8 @@ here is some overload operator
             return *this;
         }
 
-        bits& operator|=(const BitSet::bits& y){
+         
+        bits & operator|=(const bits & y){
             if(SizeOfBit!=y.SizeOfBit||SizeOfType!=y.SizeOfType)
                 throw "different_size";
             for(ULL i=0;i<SizeOfType;i++)
@@ -289,7 +297,8 @@ here is some overload operator
             return *this;
         }
 
-        bits& operator^=(const BitSet::bits& y){
+         
+        bits & operator^=(const bits &y){
             if(SizeOfBit!=y.SizeOfBit||SizeOfType!=y.SizeOfType)
                 throw "different_size";
             for(ULL i=0;i<SizeOfType;i++)
@@ -298,7 +307,9 @@ here is some overload operator
             }
             return *this;
         }
-        bits& operator>>=(size_t n){
+
+         
+        bits & operator>>=(size_t n){
             if(n>=SizeOfBit)
             {
                 this->reset();
@@ -317,7 +328,8 @@ here is some overload operator
             return *this;
         }
 
-        bits& operator<<=(size_t n){
+         
+        bits & operator<<=(size_t n){
             if(n>=SizeOfBit)
             {
                 this->reset();
@@ -337,11 +349,12 @@ here is some overload operator
             return *this;
         }
         
-        bool operator==(const BitSet::bits& y)const{
+        bool operator==(bits & y)const{
             return *this<=>y==0;
         }
 
-        bool operator!=(const BitSet::bits& y)const{
+         
+        bool operator!=(bits & y)const{
             return *this<=>y!=0;
         }
 /*
@@ -349,16 +362,24 @@ some friend functions
 some function need be implemented out of class
 
 */
-        friend std::strong_ordering operator <=>(const bits& x , const bits& y);
-        friend bits operator << ( const bits& _a , const size_t b );
-        friend bits operator >> ( const bits& _a , const size_t b );
-        friend bits operator | ( const bits& _a , const bits& _b );
-        friend bits operator & ( const bits& _a , const bits& _b );
-        friend bits operator ^ ( const bits& _a , const bits& _b );
-        friend bits operator ~ ( const bits& _a );
+        template <size_t M>
+        friend std::strong_ordering operator<=>(const bits<M>& x , const bits<M>& y);
+        template <size_t M>
+        friend bits<M>  operator << ( const bits<M> & _a , const size_t b );
+        template <size_t M>
+        friend bits<M>  operator >> ( const bits<M> & _a , const size_t b );
+        template <size_t M>
+        friend bits<M>  operator | ( const bits<M> & _a , const bits<M> & _b );
+        template <size_t M>
+        friend bits<M>  operator & ( const bits<M> & _a , const bits<M> & _b );
+        template <size_t M>
+        friend bits<M>  operator ^ ( const bits<M> & _a , const bits<M> & _b );
+        template <size_t M>
+        friend bits<M>  operator ~ ( const bits<M> & _a );
     };
 
-    std::strong_ordering operator <=>(const bits& x , const bits& y) {
+    template <size_t N>
+    std::strong_ordering operator <=>(const bits<N>& x , const bits<N>& y) {
         //wait to be implemented
         std::string compare_temp_x=x.to_string();
         std::string compare_temp_y=y.to_string();
@@ -370,44 +391,51 @@ some function need be implemented out of class
             return std::strong_ordering::less;
     }
     
-    std::ostream& operator<<(std::ostream& out, const bits& _bit){
+    template <size_t N>
+    std::ostream& operator<<(std::ostream& out, const bits<N>& _bit){
         std::string s=_bit.to_string();
         out<<s;
         return out;
     }
 
-    bits operator << ( const bits& _a , const size_t b ){
-        bits temp=_a;
+    template <size_t N>
+    bits<N> operator << ( const bits<N>& _a , const size_t b ){
+        bits<N> temp=_a;
         temp<<=b;
         return temp;
     }
 
-    bits operator >> ( const bits& _a , const size_t b ){
-        bits temp=_a;
+    template <size_t N>
+    bits<N> operator >> ( const bits<N>& _a , const size_t b ){
+        bits<N> temp=_a;
         temp>>=b;
         return temp;
     }
 
-    bits operator | ( const bits& _a , const bits& _b ){
-        bits temp=_a;
+    template <size_t N>
+    bits<N> operator | ( const bits<N>& _a , const bits<N>& _b ){
+        bits<N> temp=_a;
         temp|=_b;
         return temp;
     }
 
-    bits operator & ( const bits& _a , const bits& _b ){
-        bits temp=_a;
+    template <size_t N>
+    bits<N> operator & ( const bits<N>& _a , const bits<N>& _b ){
+        bits<N> temp=_a;
         temp&=_b;
         return temp;
     }
 
-    bits operator ^ ( const bits& _a , const bits& _b ){
-        bits temp=_a;
+    template <size_t N>
+    bits<N> operator ^ ( const bits<N>& _a , const bits<N>& _b ){
+        bits<N> temp=_a;
         temp^=_b;
         return temp;
     }
 
-    bits operator ~ ( const bits& _a ){
-        bits temp=_a;
+    template <size_t N>
+    bits<N> operator ~ ( const bits<N>& _a ){
+        bits<N> temp=_a;
         temp.filp();
         return temp;
     }
