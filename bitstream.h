@@ -11,14 +11,95 @@ namespace BitSet{
     using storage_pointer = storage_type *;
     using ULL = unsigned long long; 
 
+    template<class origin>
+    class bit_reference{
+        using storage_type =typename BitSet::storage_type;
+        using storage_pointer =typename BitSet::storage_pointer;// why???
+        storage_pointer seg;
+        storage_type mask; //complement
+
+        friend origin;
+        bit_reference(storage_pointer _seg, storage_type _mask) : seg(_seg), mask(_mask) {}
+
+    public:
+        explicit operator bool () const {
+            return bool(*seg & mask);
+        }
+
+        bool operator ~ () const {
+            return !(*seg & mask);
+        }
+
+        bit_reference & operator = (bool x) {// consider pipe 
+            if (x)
+                *seg |= mask;
+            else
+                *seg &= ~mask;
+            return *this;
+        }
+        
+        bit_reference & operator = (int x) {//consider to implement literal constant to bitset
+            return *this = bool(x);
+        }
+
+        bit_reference & operator = (const bit_reference & x) {
+            return *this = bool(x);
+        }
+
+    };
+
+    template<class origin>
+    class bit_const_reference {
+        using storage_type =typename BitSet::storage_type;
+        using storage_pointer =const storage_type *;// why???
+        storage_pointer seg;
+        storage_type mask; //complement
+
+        friend origin;
+        bit_const_reference(storage_pointer  _seg, storage_type _mask) : seg(_seg), mask(_mask) {}
+
+    public:
+        explicit operator bool () const {
+            return bool(*seg & mask);
+        }
+
+        bool operator ~ () const {
+            return !(*seg & mask);
+        }
+    };
+
     template <size_t N>
     class bits{
+    static const ULL length=sizeof(storage_type)*8;  //length of storage_type in bits
 protected :
-    ULL length=sizeof(storage_type)*8;  //length of storage_type in bits
     ULL SizeOfType=0;  //size of storage_type
     size_t SizeOfBit;  //size of bitset in bits// uesd to judge if beyond
     storage_type bitset[1000];
     // storage_pointer bitset=storage_bitset;
+
+    using reference = bit_reference<bits<N>>;
+    using const_reference = bit_const_reference<bits<N>>;
+
+//friend
+    friend class bit_reference<bits<N>>;
+
+    template <size_t M>friend std::strong_ordering operator<=>(const bits<M>& x , const bits<M>& y);
+    template <size_t M>friend bits<M>  operator << ( const bits<M> & _a , const size_t b );
+    template <size_t M>friend bits<M>  operator >> ( const bits<M> & _a , const size_t b );
+    template <size_t M>friend bits<M>  operator | ( const bits<M> & _a , const bits<M> & _b );
+    template <size_t M>friend bits<M>  operator & ( const bits<M> & _a , const bits<M> & _b );
+    template <size_t M>friend bits<M>  operator ^ ( const bits<M> & _a , const bits<M> & _b );
+    template <size_t M>friend bits<M>  operator ~ ( const bits<M> & _a );
+
+    reference make_ref(size_t p) {
+        return reference(bitset + p / length, size_t(1) << (p % length));
+    }
+
+    const_reference make_cref(size_t p) const {
+        return const_reference(bitset + p / length, size_t(1) << (p % length));
+    }
+
+
 public:
 /*
 constructors
@@ -135,7 +216,7 @@ member functions
         bool all(){
             for(ULL i=0;i<SizeOfBit;i++)
             {
-                if(this->operator[](i)==0)
+                if(test(i)==0)
                     return false;
             }
             return true;
@@ -148,7 +229,7 @@ member functions
         bool none(){
             for(ULL i=0;i<SizeOfBit;i++)
             {
-                if(this->operator[](i)==1)
+                if(test(i)==1)
                     return false;
             }
             return true;
@@ -170,12 +251,6 @@ member functions
 
         bits & filp(size_t p)
         {
-            //temporarily not check if p is beyond
-            //after & implement, check if p is beyond
-
-            // if(p>=SizeOfBit)
-            //     throw "beyond";
-            // else
             {
                 if(test(p))
                     bitset[p/length]=bitset[p/length] & ~(size_t(1)<<(p%length));//set 0
@@ -224,7 +299,7 @@ member functions
             std::string s;
             for(long long i=SizeOfBit-1;i>=0;i--)
             {
-                if(test(i))
+                if(make_cref(i))
                     s.push_back('1');
                 else
                     s.push_back('0');
@@ -252,13 +327,8 @@ here is some overload operator
 `<=>`  could implement  other compare operator
 */
 
-        // [] get bit in position p
-        // you should inplement & later!!!!
-        bool operator[](size_t p){
-            if(p>=SizeOfBit)
-                throw "beyond";
-            else
-                return (bitset[p/length] & (size_t(1)<<(p%length)));
+        reference operator[](size_t p){
+            return make_ref(p);
         }
 
         //overload operator= 
@@ -274,7 +344,6 @@ here is some overload operator
             }
             return *this;
         }
-
          
         bits & operator&=(const bits & y){
             if(SizeOfBit!=y.SizeOfBit||SizeOfType!=y.SizeOfType)
@@ -285,8 +354,7 @@ here is some overload operator
             }
             return *this;
         }
-
-         
+ 
         bits & operator|=(const bits & y){
             if(SizeOfBit!=y.SizeOfBit||SizeOfType!=y.SizeOfType)
                 throw "different_size";
@@ -296,8 +364,7 @@ here is some overload operator
             }
             return *this;
         }
-
-         
+  
         bits & operator^=(const bits &y){
             if(SizeOfBit!=y.SizeOfBit||SizeOfType!=y.SizeOfType)
                 throw "different_size";
@@ -307,8 +374,7 @@ here is some overload operator
             }
             return *this;
         }
-
-         
+     
         bits & operator>>=(size_t n){
             if(n>=SizeOfBit)
             {
@@ -327,8 +393,7 @@ here is some overload operator
             }
             return *this;
         }
-
-         
+   
         bits & operator<<=(size_t n){
             if(n>=SizeOfBit)
             {
@@ -353,7 +418,6 @@ here is some overload operator
             return *this<=>y==0;
         }
 
-         
         bool operator!=(bits & y)const{
             return *this<=>y!=0;
         }
@@ -362,20 +426,6 @@ some friend functions
 some function need be implemented out of class
 
 */
-        template <size_t M>
-        friend std::strong_ordering operator<=>(const bits<M>& x , const bits<M>& y);
-        template <size_t M>
-        friend bits<M>  operator << ( const bits<M> & _a , const size_t b );
-        template <size_t M>
-        friend bits<M>  operator >> ( const bits<M> & _a , const size_t b );
-        template <size_t M>
-        friend bits<M>  operator | ( const bits<M> & _a , const bits<M> & _b );
-        template <size_t M>
-        friend bits<M>  operator & ( const bits<M> & _a , const bits<M> & _b );
-        template <size_t M>
-        friend bits<M>  operator ^ ( const bits<M> & _a , const bits<M> & _b );
-        template <size_t M>
-        friend bits<M>  operator ~ ( const bits<M> & _a );
     };
 
     template <size_t N>
