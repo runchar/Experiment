@@ -14,13 +14,18 @@ namespace BitSet
     {
         using storage_type = typename origin::storage_type;
         using storage_pointer = typename origin::storage_pointer; // why???
-        storage_pointer seg=nullptr;
+        storage_pointer seg = nullptr;
         storage_type mask; // complement
 
         friend origin;
         bit_reference(storage_pointer _seg, storage_type _mask) : seg(_seg), mask(_mask) {}
 
     public:
+        static bit_reference create(storage_pointer _seg, storage_type _mask)
+        {
+            return bit_reference(_seg, _mask);
+        }
+
         explicit operator bool() const
         {
             return bool(*seg & mask);
@@ -58,13 +63,24 @@ namespace BitSet
         using storage_type = typename origin::storage_type;
         using storage_pointer = const storage_type *; // why???
         storage_pointer seg;
-        storage_type mask=nullptr; // complement
+        storage_type mask = nullptr; // complement
         friend origin;
-        friend class bit_iterator<origin, true>;
+
+        // friend class bit_iterator<origin, true>;
+        /*
+            question:
+            here when I want to use friend to let bit_iterator access bit_const_reference, the compiler tell me
+            'bit_iterator' is not a class template, but I define this template next
+        */
 
         bit_const_reference(storage_pointer _seg, storage_type _mask) : seg(_seg), mask(_mask) {}
 
     public:
+        static bit_const_reference create(storage_pointer _seg, storage_type _mask)
+        {
+            return bit_const_reference(_seg, _mask);
+        }
+
         explicit operator bool() const
         {
             return bool(*seg & mask);
@@ -76,10 +92,10 @@ namespace BitSet
         }
     };
 
-    template <class origin,bool is_const>
+    template <class origin, bool is_const>
     class bit_iterator
     {
-    // tags of a random access iterator
+        // tags of a random access iterator
     public:
         using iterator_category = std::random_access_iterator_tag;
         using value_type = bool;
@@ -87,10 +103,10 @@ namespace BitSet
         using pointer = bit_iterator;
         using reference = std::conditional_t<is_const, bit_const_reference<origin>, bit_reference<origin>>;
 
-        bit_iterator(){};// uesd in auto ??, construct a null iterator
+        bit_iterator(){};                                                                    // uesd in auto ??, construct a null iterator
         bit_iterator(const bit_iterator<origin, false> &x) : seg(x.seg), offset(x.offset) {} // copy constructor
 
-        bit_iterator operator = (const bit_iterator<origin, false> &x)
+        bit_iterator operator=(const bit_iterator<origin, false> &x)
         {
             seg = x.seg;
             offset = x.offset;
@@ -99,20 +115,183 @@ namespace BitSet
 
         reference operator*() const
         {
-            return bit_const_reference<origin>(seg,size_t(1)<<offset);
+            return reference::create(seg, size_t(1) << offset);
+        }
+
+        reference operator*()
+        {
+            return reference::create(seg, size_t(1) << offset);
+        }
+
+        /*
+            question:
+            in the iterator, operator like `++`,`--`,`>=`will not modify the object itself
+            so all the operator should be const so that the both iterator can use it
+            and `*` should be implemented in two version, one for const and one for non-const
+            Right?
+            Yes, it is right
+        */
+
+        /*
+        request
+        https://zh.cppreference.com/w/cpp/named_req/RandomAccessIterator
+        */
+
+        bit_iterator &operator++()
+        {
+            if (offset == origin::length - 1)
+            {
+                seg++;
+                offset = 0;
+            }
+            else
+            {
+                offset++;
+            }
+            return *this;
+        }
+
+        bit_iterator operator++(int)
+        {
+            bit_iterator temp = *this;
+            ++*this;
+            return temp;
+        }
+
+        bit_iterator &operator--()
+        {
+            if (offset == 0)
+            {
+                seg--;
+                offset = origin::length - 1;
+            }
+            else
+            {
+                offset--;
+            }
+            return *this;
+        }
+
+        bit_iterator operator--(int)
+        {
+            bit_iterator temp = *this;
+            --*this;
+            return temp;
+        }
+
+        bit_iterator &operator+=(difference_type n)
+        {
+            if (n < 0)
+                return *this -= -n;
+            difference_type seg_offset = n / origin::length;
+            n %= origin::length;
+
+            // if(seg+seg_offset > origin::SizeOfType)
+            //     throw std::out_of_range("out of range");
+
+            if (offset + n >= origin::length)
+            {
+                seg += seg_offset + 1;
+                offset = offset + n - origin::length;
+            }
+            else
+            {
+                offset += n;
+            }
+            return *this;
+        }
+
+        bit_iterator &operator-=(difference_type n)
+        {
+            if (n < 0)
+                return *this += -n;
+            difference_type seg_offset = n / origin::length;
+            n %= origin::length;
+
+            // if(seg-seg_offset < 0)
+            //     throw std::out_of_range("out of range");
+
+            if (offset < n)
+            {
+                seg -= seg_offset + 1;
+                offset = offset - n + origin::length;
+            }
+            else
+            {
+                offset -= n;
+            }
+            return *this;
+        }
+
+        bit_iterator operator+(int n)  //it+n
+        {
+            bit_iterator temp = *this;
+            return temp += n;
+        }
+
+        friend bit_iterator operator + (int n , bit_iterator it);
+
+        bit_iterator operator-(int n)
+        {
+            bit_iterator temp = *this;
+            return temp -= n;
+        }
+
+        difference_type operator-(const bit_iterator &it)
+        {
+            return (seg - it.seg) * origin::length + offset - it.offset;
+        }
+
+        reference operator[](size_t p)
+        {
+            return *(*this+p);
+        }
+
+        bool operator==(const bit_iterator &it) const
+        {
+            return seg == it.seg && offset == it.offset;
+        }
+
+        bool operator!=(const bit_iterator &it) const
+        {
+            return !(*this == it);
+        }
+
+        auto operator<=>(const bit_iterator &it) const
+        {
+            if (*this == it)
+                return std::strong_ordering::equal;
+            else if (this->seg > it.seg || (this->seg == it.seg && this->offset > it.offset))
+                return std::strong_ordering::greater;
+            else
+                return std::strong_ordering::less;
         }
 
     private:
         using storage_type = typename origin::storage_type;
-        using storage_pointer = typename std::conditional_t<is_const, const typename origin::storage_pointer, typename origin::storage_pointer> ;
+        using storage_pointer = typename std::conditional_t<is_const, const typename origin::storage_pointer, typename origin::storage_pointer>;
 
-        storage_pointer seg=nullptr;// pointer to a storage_type 'type'
-        unsigned int offset=0;// offset in storage_type
+        storage_pointer seg = nullptr; // pointer to a storage_type 'type'
+        unsigned int offset = 0;       // offset in storage_type
 
+        friend bit_iterator<origin, true>;
+        friend bit_iterator<origin, false>;
         friend origin;
         bit_iterator(storage_pointer _seg, unsigned int _offset) : seg(_seg), offset(_offset) {}
-
     };
+
+    template <class origin>
+    bit_iterator<origin, false> operator+(int n, bit_iterator<origin, false> it)
+    {
+        return it+=n;
+    }
+
+
+    template <class origin>
+    bit_iterator<origin, true> operator+(int n, bit_iterator<origin, true> it)
+    {
+        return it+=n;
+    }
 
     template <size_t N>
     class bits
@@ -168,11 +347,11 @@ namespace BitSet
 
         const_iterator make_citer(size_t p) const
         {
-//            return bit_iterator<bits<N>, true>(bitset + p / length, p % length);
-            auto cit=bit_iterator<bits<N>, false>(bitset + p / length, p % length);
+            //            return bit_iterator<bits<N>, true>(bitset + p / length, p % length);
+            // Linear Algebra test like a shit QAQ --5.12
+            auto cit = bit_iterator<bits<N>, false>(bitset + p / length, p % length);
             return cit;
         }
-
 
     public:
         /*
@@ -396,6 +575,16 @@ namespace BitSet
         iterator begin()
         {
             return make_iter(0);
+        }
+
+        iterator end()
+        {
+            return make_iter(SizeOfBit);
+        }
+
+        iterator make(int p)
+        {
+            return make_iter(p);
         }
 
         void print()

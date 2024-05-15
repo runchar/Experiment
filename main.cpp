@@ -30,7 +30,7 @@ void check()
         for (int i = 0; i <= 456; i += 5)
             a[i] = ~a[i];
         std::cout << a << std::endl;
-        return;
+        // return;
         // std::cout << a << std::endl;
         // a.operator<<=(2);
         // std::cout << a << std::endl;
@@ -57,12 +57,57 @@ void check()
         // std::cout << "Hello \nthis is a check\n"<< std::endl;
         auto it=a.begin();
         std::cout<<static_cast<bool>(*it)<<std::endl;
+        for(int i=0;i<100;i++)
+        {
+            BitSet::bit_iterator<bits_type, true> cit=it;
+            std::cout<<static_cast<bool>(*it)<<static_cast<bool>(*cit)<<std::endl;
+            ++it;
+            if(i%10==0)
+            {
+                std::cout<<std::endl;
+                --it;
+            }
+        }
+        std::cout<<std::endl;
+        for(int i=0;i<100;i++)
+        {
+            std::cout<<static_cast<bool>(a[i]);
+        }
+        // const auto ca=a;
+        // auto cit=ca.begin();
+        // std::cout<<static_cast<bool>(*cit)<<std::endl;
+        // const BitSet::bits<500> ca(2);
+        // auto cit=ca.begin();
+        // std::cout<<static_cast<bool>(*cit)<<std::endl;
         //std::cout<<std::ptrdiff_t <<std::endl;
+        std::cout<<std::endl<<"--------------------"<<std::endl;
+
+        BitSet::bits<50> b1(0);
+        BitSet::bits<20> b2(0);
+        auto it_begin=b1.begin();
+        auto it_plus=it_begin++;
+        for(auto it=b1.begin();it!=b1.end();it++)
+        {
+            std::cout<<(int)(it-it_begin)<<" >:  "<<(bool)(it>it_begin)<<" <:  "<<(bool)(it<it_begin)<<" =:  "<<(bool)(it==(it_begin+1))<<std::endl;
+            if(((int)(it-it_begin))%10==0)
+            {
+                *it=true;
+            }
+//            std::cout<<()
+        }
+        std::cout<<static_cast<bool>(it_plus[5])<<std::endl;
+        it_plus[5]= true;
+        std::cout<<static_cast<bool>(it_plus[5])<<std::endl;
+        for(auto it:b1)
+        {
+            std::cout<<static_cast<bool>(it)<<" ";
+        }
     }
     catch (const char *msg)
     {
         std::cerr << "Exception caught: " << msg << std::endl;
     }
+    system("pause");
 }
 
 int main()
