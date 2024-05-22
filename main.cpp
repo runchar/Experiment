@@ -11,7 +11,7 @@
 #include <compare>
 #include <algorithm>
 
-const int N = 6;
+const int N = 10;
 using bits_type = BitSet::bits<N>;
 // using bits_type = std::bitset<N>;
 std::map<std::string, bits_type> M;
@@ -138,9 +138,16 @@ void check_int()
     aa=c;
     std::cout<<aa<<std::endl;
     try{
-    auto d=b+c;
-    // aa=d;
-    // std::cout<<aa<<std::endl;
+    auto d=b+"1";
+    aa=d;
+    std::cout<<aa<<std::endl;
+    auto e=b-"10";
+    aa=e;
+    std::cout<<aa<<std::endl;
+    Inter::Inter<N> num(123);
+    std::cout<<num.to_number("dec")<<std::endl;
+    std::cout<<num.to_number("bin")<<std::endl;
+    std::cout<<num.to_number("hex")<<std::endl;
     }catch(std::exception &e){
         std::cout<<e.what()<<std::endl;
     }

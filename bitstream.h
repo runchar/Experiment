@@ -255,17 +255,14 @@ namespace BitSet
             return *(*this+p);
         }
 
-        friend bool operator==(const bit_iterator &it1, const bit_iterator &it2) 
+        bool operator==(const bit_iterator &it) const
         {
-            return it1.seg == it2.seg && it2.offset == it2.offset;
+            return (*this).seg == it.seg && (*this).offset == it.offset;
         }
 
-        friend bool operator!=(const bit_iterator &it1, const bit_iterator &it2)
+        bool operator!=(const bit_iterator &it) const
         {
-            // if((it1 == it2)){
-            //     throw std::runtime_error("fuck");
-            // }
-            return !(it1 == it2);
+            return !(*this == it);
         }
 
         auto operator<=>(const bit_iterator &it) const
@@ -600,7 +597,7 @@ namespace BitSet
 
         iterator end()
         {
-            std::cout<<"SizeOfBit:  "<<SizeOfBit<<std::endl;
+            // std::cout<<"SizeOfBit:  "<<SizeOfBit<<std::endl;
             return make_iter(SizeOfBit);
         }
 
@@ -855,23 +852,11 @@ namespace Inter{
             return *this;
         } 
 
-
-/*
         Inter operator +(const Inter & y) const{
             Inter tmp;
             auto it=tmp.begin();
             auto itx=this->cbegin();
             auto ity=y.cbegin();
-            // for(;ity!=y.cend();it++,itx++,ity++)
-            // {
-            //     bool val_x=static_cast<bool>(*itx);
-            //     bool val_y=static_cast<bool>(*ity);
-            //     (*it)=(bool)(val_x^val_y);
-            //     if((it+1)!=tmp.end())
-            //         (*(it+1))=(bool)(val_x&val_y);
-            //     // (*(it+1))=(bool)(val_x&val_y);
-            // }
-            // try{
             bool CarryBit=false;
             for(auto end=tmp.end();it!=end;it++,itx++,ity++)
             {
@@ -880,45 +865,107 @@ namespace Inter{
                 (*it)=(bool)(val_x^val_y^CarryBit);
                 CarryBit=(val_x&val_y)||(val_x&CarryBit)||(CarryBit&val_y);
             }
-            // }catch(std::exception &e){
-            //     std::cout<<e.what()<<std::endl;
-            // }
-            // 捕获不了异常是什么鬼illegal instruction????? fuck!
+            // BitSet::bits<N> tmp2=tmp;
+            // std::cout<<tmp2<<std::endl;
+			return tmp;
         }
 
-        guess :
-        对于一个依靠默认构造函数的tmp,其SizeOfBit值并没有被设置好,如果按照
-        它的Bit值进行遍历可能会有超界或者遍历不完全的问题
-        由此,设置resever 函数设置Inter类的长度
+        Inter operator +(const ULL & y) const{
+            Inter tmp(y);
+            return *this+tmp;
+        }
 
-*/
+        Inter operator +(const char * y) const{
+            Inter tmp(y,strlen(y),'0','1');
+            return *this+tmp;
+        }
 
-        Inter operator +(const Inter & y) const{
+        Inter operator -(const Inter & y) const{
             Inter tmp;
-            // auto it=tmp.begin();
+            auto it=tmp.begin();
             auto itx=this->cbegin();
             auto ity=y.cbegin();
-            bool CarryBit=false;
-            // for(auto end=tmp.end();it!=end;it++,itx++,ity++)
-            // {
-                // bool val_x=static_cast<bool>(*itx);
-                // bool val_y=static_cast<bool>(*ity);
-                // (*it)=(bool)(val_x^val_y^CarryBit);
-                // CarryBit=(val_x&val_y)||(val_x&CarryBit)||(CarryBit&val_y);
-            // }
-            bool judge=true;
-            auto endd=tmp.end();
-            for(auto it=tmp.begin();rand()%3;)
+            bool BorrowBit=false;
+            for(auto end=tmp.end();it!=end;it++,itx++,ity++)
             {
-                std::cout<<static_cast<bool>(*it)<<" "<<(tmp.end()-it)<<std::endl;;
-                it++;
-                // endd=tmp.end();
-                judge=(it!=tmp.end());
+                bool val_x=static_cast<bool>(*itx);
+                bool val_y=static_cast<bool>(*ity);
+                (*it)=(bool)(val_x^val_y^BorrowBit);
+                BorrowBit=(~val_x&val_y)|((~val_x|val_y)&BorrowBit);
             }
-			return tmp;
+            return tmp;
+        }
+
+        Inter operator -(const ULL & y) const{
+            Inter tmp(y);
+            return *this-tmp;
+        }
+
+        Inter operator -(const char * y) const{
+            Inter tmp(y,strlen(y),'0','1');
+            return *this-tmp;
+        }
+        // overflow deal same with unsigned integer
+
+        std::pair<Inter,int> operator /(const Inter & divisor) const{
+            Inter divi = *this;
+            Inter quo;
+            Inter rem;
+            int mod=0;
+            for(auto it=divi.end()-1;it>=divi.begin();it--)
+            {
+                rem<<=1;
+                rem[0]=*it;
+                if(rem>=divisor)
+                {
+                    rem=rem-divisor;
+                    quo[it-divi.begin()]=1;
+                }else{
+                    quo[it-divi.begin()]=0;
+                    // mod=std::max(mod,std::stoi(rem.to_string(),nullptr,2));
+                }
+            }
+            mod=std::stoi(rem.to_string(),nullptr,2);
+            return {quo,mod};
+        }
+
+        std::string to_number( const char *op )
+        {
+            if(op=="dec")
+            {
+                Inter stan(10);
+                Inter x=*this;
+                std::cout<<x.to_string()<<std::endl<<std::endl;
+                std::string num;
+                while(x>stan)
+                {
+                    auto [tmp,mod]=x/stan;
+                    num+=mod+'0';
+                    x=tmp;
+                    // std::cout<<num<<std::endl;
+                    // std::cout<<x.to_string()<<std::endl;
+                }
+                num+=std::stoi(x.to_string(),nullptr,2)+'0';
+                std::reverse(num.begin(), num.end());
+                return num;
+            }
+
+            if(op=="bin")
+            {
+                return this->to_string();
+            }
+
+            if(op=="hex")
+            {
+                std::string hex;
+                /*
+                    wait to be implemented
+                */
+                std::reverse(hex.begin(), hex.end());
+                return hex;
+            }
         }
 	};
 }
-
 // []  &
 // constructor (ULL)
