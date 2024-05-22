@@ -11,8 +11,8 @@
 #include <compare>
 #include <algorithm>
 
-const int N = 500;
-using bits_type = BitSet::bits<500>;
+const int N = 6;
+using bits_type = BitSet::bits<N>;
 // using bits_type = std::bitset<N>;
 std::map<std::string, bits_type> M;
 
@@ -20,7 +20,7 @@ void check()
 {
     try
     {
-        BitSet::bits<500> a(2);
+        BitSet::bits<N> a(2);
         std::cout << a << std::endl;
 
         // a[2]=a[1]=a[0]=true;
@@ -85,7 +85,7 @@ void check()
         BitSet::bits<50> b1(0);
         BitSet::bits<20> b2(0);
         auto it_begin=b1.begin();
-        auto it_plus=it_begin++;
+        auto it_plus=1+it_begin;
         for(auto it=b1.begin();it!=b1.end();it++)
         {
             std::cout<<(int)(it-it_begin)<<" >:  "<<(bool)(it>it_begin)<<" <:  "<<(bool)(it<it_begin)<<" =:  "<<(bool)(it==(it_begin+1))<<std::endl;
@@ -110,10 +110,52 @@ void check()
     system("pause");
 }
 
+void check_it()
+{
+    // BitSet::bits<N> a(10);
+    Inter::Inter<N> a(10);
+    std::cout << a << std::endl;
+
+    for(auto it=a.begin();it!=a.end();it++)
+    {
+        std::cout<<static_cast<bool>(*it)<<" ";
+    }
+    std::cout<<"run correctly in check_it"<<std::endl;
+}
+
+void check_int()
+{
+
+    check_it();
+
+	Inter::Inter<N> a(13);
+    Inter::Inter<N> b=a;
+    BitSet::bits aa=a;
+    std::cout<<aa<<std::endl;
+    aa=b;
+    std::cout<<aa<<std::endl;
+    Inter::Inter<N> c("01111",5,'0','1');
+    aa=c;
+    std::cout<<aa<<std::endl;
+    try{
+    auto d=b+c;
+    // aa=d;
+    // std::cout<<aa<<std::endl;
+    }catch(std::exception &e){
+        std::cout<<e.what()<<std::endl;
+    }
+    std::cout<<"run correctly"<<std::endl;
+}
+
 int main()
 {
-    check();
+
+//    check();
+	    check_int();
+	system("pause");
+
     return 0;
+
     // freopen("in.txt", "r", stdin);
     std::string op;
     while (std::cin >> op)

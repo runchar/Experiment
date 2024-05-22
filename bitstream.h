@@ -8,7 +8,6 @@
 
 namespace BitSet
 {
-
     template <class origin>
     class bit_reference
     {
@@ -95,6 +94,11 @@ namespace BitSet
     template <class origin, bool is_const>
     class bit_iterator
     {
+        using storage_type = typename origin::storage_type;
+//        using storage_pointer = typename std::conditional_t<is_const, const typename origin::storage_pointer, typename origin::storage_pointer>;
+//question ??
+		using storage_pointer = typename std::conditional_t<is_const,typename origin::const_storage_pointer, typename origin::storage_pointer>;
+        // using storage_pointer = typename std::conditional_t<is_const,typename const origin::storage_pointer, typename origin::storage_pointer>;
         // tags of a random access iterator
     public:
         using iterator_category = std::random_access_iterator_tag;
@@ -183,11 +187,14 @@ namespace BitSet
         {
             if (n < 0)
                 return *this -= -n;
+
+            // if(n+seg*origin::length+offset>origin::SizeOfType)
+            // {
+            //     throw std::runtime_error("out of range");
+            // }
+
             difference_type seg_offset = n / origin::length;
             n %= origin::length;
-
-            // if(seg+seg_offset > origin::SizeOfType)
-            //     throw std::out_of_range("out of range");
 
             if (offset + n >= origin::length)
             {
@@ -228,8 +235,9 @@ namespace BitSet
             bit_iterator temp = *this;
             return temp += n;
         }
-
-        friend bit_iterator operator + (int n , bit_iterator it);
+        template <class o, bool ic>
+        friend bit_iterator<o, ic> operator + (int n , bit_iterator<o, ic> it);
+//        friend bit_iterator<origin, false> operator + (int n , bit_iterator<origin, false> it);
 
         bit_iterator operator-(int n)
         {
@@ -247,14 +255,17 @@ namespace BitSet
             return *(*this+p);
         }
 
-        bool operator==(const bit_iterator &it) const
+        friend bool operator==(const bit_iterator &it1, const bit_iterator &it2) 
         {
-            return seg == it.seg && offset == it.offset;
+            return it1.seg == it2.seg && it2.offset == it2.offset;
         }
 
-        bool operator!=(const bit_iterator &it) const
+        friend bool operator!=(const bit_iterator &it1, const bit_iterator &it2)
         {
-            return !(*this == it);
+            // if((it1 == it2)){
+            //     throw std::runtime_error("fuck");
+            // }
+            return !(it1 == it2);
         }
 
         auto operator<=>(const bit_iterator &it) const
@@ -268,16 +279,14 @@ namespace BitSet
         }
 
     private:
-        using storage_type = typename origin::storage_type;
-        using storage_pointer = typename std::conditional_t<is_const, const typename origin::storage_pointer, typename origin::storage_pointer>;
-
         storage_pointer seg = nullptr; // pointer to a storage_type 'type'
         unsigned int offset = 0;       // offset in storage_type
 
         friend bit_iterator<origin, true>;
         friend bit_iterator<origin, false>;
         friend origin;
-        bit_iterator(storage_pointer _seg, unsigned int _offset) : seg(_seg), offset(_offset) {}
+
+        explicit bit_iterator (storage_pointer _seg, unsigned int _offset) : seg(_seg), offset(_offset) {}
     };
 
     template <class origin>
@@ -299,12 +308,13 @@ namespace BitSet
     public:
         using storage_type = size_t;
         using storage_pointer = storage_type *;
+		using const_storage_pointer = const storage_type *;
         using ULL = unsigned long long;
         static const ULL length = sizeof(storage_type) * 8; // length of storage_type in bits
     protected:
         ULL SizeOfType = 0; // size of storage_type
         size_t SizeOfBit;   // size of bitset in bits// uesd to judge if beyond
-        storage_type bitset[1000];
+        storage_type bitset[N];
         // storage_pointer bitset=storage_bitset;
 
         using reference = bit_reference<bits<N>>;
@@ -314,6 +324,9 @@ namespace BitSet
 
         // friend
         friend class bit_reference<bits<N>>;
+        friend class bit_const_reference<bits<N>>;
+        friend class bit_iterator<bits<N>,false>;
+        friend class bit_iterator<bits<N>,true>;
 
         template <size_t M>
         friend std::strong_ordering operator<=>(const bits<M> &x, const bits<M> &y);
@@ -345,13 +358,17 @@ namespace BitSet
             return bit_iterator<bits<N>, false>(bitset + p / length, p % length);
         }
 
-        const_iterator make_citer(size_t p) const
-        {
-            //            return bit_iterator<bits<N>, true>(bitset + p / length, p % length);
-            // Linear Algebra test like a shit QAQ --5.12
-            auto cit = bit_iterator<bits<N>, false>(bitset + p / length, p % length);
-            return cit;
+        const_iterator make_iter(size_t p)const {
+            return bit_iterator<bits<N>, true>(bitset + p / length, p % length);
         }
+
+        // const_iterator make_citer(size_t p) const {
+        //     //            return bit_iterator<bits<N>, true>(bitset + p / length, p % length);
+        //     // Linear Algebra test like a shit QAQ --5.12
+        //     // bit_iterator<bits<N>, true> const cit = bit_iterator<bits<N>, false>(bitset + p / length, p % length);
+        //     bit_iterator<bits<N>, true> cit=make_iter(p);
+        //     return cit;
+        // }
 
     public:
         /*
@@ -416,7 +433,6 @@ namespace BitSet
                         throw "invalid_arguments"; //????
                     }
                     BitsCnt++;
-                    ;
                 }
             }
             // if(BitsCnt!=n)
@@ -577,8 +593,19 @@ namespace BitSet
             return make_iter(0);
         }
 
+        const_iterator cbegin()const {
+            return make_iter(0);
+        }
+        
+
         iterator end()
         {
+            std::cout<<"SizeOfBit:  "<<SizeOfBit<<std::endl;
+            return make_iter(SizeOfBit);
+        }
+
+        const_iterator cend()
+        const {
             return make_iter(SizeOfBit);
         }
 
@@ -615,7 +642,7 @@ namespace BitSet
 
         // overload operator=
 
-        bits &operator=(const bits &y)
+		bits &operator=(const bits &y)
         {
             if (this == &y)
                 return *this;
@@ -716,6 +743,10 @@ namespace BitSet
         some function need be implemented out of class
 
         */
+
+        ULL getSizeOfType() const { return SizeOfType; }
+        ULL getSizeOfBit() const { return SizeOfBit; }
+		storage_pointer getBitset() {return bitset;}
     };
 
     template <size_t N>
@@ -788,6 +819,105 @@ namespace BitSet
         temp.flip();
         return temp;
     }
+}
+
+namespace Inter{
+	using namespace BitSet;
+    using ULL = unsigned long long;
+	template <size_t N>
+	class Inter : public bits<N>{
+    public:
+
+        Inter(){};
+
+		Inter(ULL n){
+			bits<N> tmp(n);
+			*this=tmp;
+		}
+
+        Inter(const char *s, size_t n, char zero, char one){
+            bits<N> tmp(s,n,zero,one);
+            *this=tmp;
+        }
+
+        Inter(const Inter &y){
+            bits<N> tmp(y);
+            *this=tmp;
+        }
+
+        ~Inter()=default;
+
+        //坑,为了避免getBitset()的 const问题这里会有意外修改的风险
+        Inter &operator = ( BitSet::bits<N> &x) {
+            this->SizeOfType = x.getSizeOfType();
+			this->SizeOfBit = x.getSizeOfBit();
+			memcpy(this->bitset,x.getBitset(),N/8+1);
+            return *this;
+        } 
+
+
+/*
+        Inter operator +(const Inter & y) const{
+            Inter tmp;
+            auto it=tmp.begin();
+            auto itx=this->cbegin();
+            auto ity=y.cbegin();
+            // for(;ity!=y.cend();it++,itx++,ity++)
+            // {
+            //     bool val_x=static_cast<bool>(*itx);
+            //     bool val_y=static_cast<bool>(*ity);
+            //     (*it)=(bool)(val_x^val_y);
+            //     if((it+1)!=tmp.end())
+            //         (*(it+1))=(bool)(val_x&val_y);
+            //     // (*(it+1))=(bool)(val_x&val_y);
+            // }
+            // try{
+            bool CarryBit=false;
+            for(auto end=tmp.end();it!=end;it++,itx++,ity++)
+            {
+                bool val_x=static_cast<bool>(*itx);
+                bool val_y=static_cast<bool>(*ity);
+                (*it)=(bool)(val_x^val_y^CarryBit);
+                CarryBit=(val_x&val_y)||(val_x&CarryBit)||(CarryBit&val_y);
+            }
+            // }catch(std::exception &e){
+            //     std::cout<<e.what()<<std::endl;
+            // }
+            // 捕获不了异常是什么鬼illegal instruction????? fuck!
+        }
+
+        guess :
+        对于一个依靠默认构造函数的tmp,其SizeOfBit值并没有被设置好,如果按照
+        它的Bit值进行遍历可能会有超界或者遍历不完全的问题
+        由此,设置resever 函数设置Inter类的长度
+
+*/
+
+        Inter operator +(const Inter & y) const{
+            Inter tmp;
+            // auto it=tmp.begin();
+            auto itx=this->cbegin();
+            auto ity=y.cbegin();
+            bool CarryBit=false;
+            // for(auto end=tmp.end();it!=end;it++,itx++,ity++)
+            // {
+                // bool val_x=static_cast<bool>(*itx);
+                // bool val_y=static_cast<bool>(*ity);
+                // (*it)=(bool)(val_x^val_y^CarryBit);
+                // CarryBit=(val_x&val_y)||(val_x&CarryBit)||(CarryBit&val_y);
+            // }
+            bool judge=true;
+            auto endd=tmp.end();
+            for(auto it=tmp.begin();rand()%3;)
+            {
+                std::cout<<static_cast<bool>(*it)<<" "<<(tmp.end()-it)<<std::endl;;
+                it++;
+                // endd=tmp.end();
+                judge=(it!=tmp.end());
+            }
+			return tmp;
+        }
+	};
 }
 
 // []  &

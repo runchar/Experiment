@@ -41,3 +41,21 @@
 * 重载了`<<`  运算符,现在可以直接使用流对bits进行输出
 * 重载了这类逻辑运算符
 * 通过重载`<=>`重载了各类比较符
+
+
+### tips
+#### const_iterator 
+```
+[{
+	"resource": "/f:/WorkSpace/OOP/Experiment/bitstream.h",
+	"owner": "cpptools",
+	"severity": 8,
+	"message": "invalid conversion from 'const BitSet::bits<500>::storage_type*' {aka 'const long long unsigned int*'} to 'BitSet::bit_iterator<BitSet::bits<500>, true>::storage_pointer' {aka 'long long unsigned int*'} [-fpermissive]",
+	"source": "gcc",
+	"startLineNumber": 348,
+	"startColumn": 55,
+	"endLineNumber": 348,
+	"endColumn": 55
+}]
+
+solve: using storage_pointer = typename std::conditional_t<is_const,typename origin::const_storage_pointer, typename origin::storage_pointer>;

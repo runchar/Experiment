@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "CMakeFiles\\Experiment.dir\\main.cpp.obj",
+            "outputs": [
+                "F:\\WorkSpace\\OOP\\Experiment\\cmake-build-debug\\vc140.pdb",
+                "CMakeFiles\\Experiment.dir\\main.cpp.obj.ddi"
+            ],
+            "requires": []
+        }
+    ]
+}
