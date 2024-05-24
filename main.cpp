@@ -113,7 +113,7 @@ void check()
 void check_it()
 {
     // BitSet::bits<N> a(10);
-    uint::uint<N> a(10);
+    Uint::uint<N> a(10);
     std::cout << a << std::endl;
 
     for(auto it=a.begin();it!=a.end();it++)
@@ -128,13 +128,13 @@ void check_int()
 
     // check_it();
 
-	uint::uint<N> a(13);
-    uint::uint<N> b=a;
+	Uint::uint<N> a(13);
+    Uint::uint<N> b=a;
     BitSet::bits aa=a;
     std::cout<<aa<<std::endl;
     aa=b;
     std::cout<<aa<<std::endl;
-    uint::uint<N> c("01111",5,'0','1');
+    Uint::uint<N> c("01111",5,'0','1');
     aa=c;
     std::cout<<aa<<std::endl;
     try{
@@ -144,11 +144,11 @@ void check_int()
     auto e=b-"10";
     aa=e;
     std::cout<<aa<<std::endl;
-    uint::uint<N> num("123");
+    Uint::uint<N> num("123");
     std::cout<<num.to_number("dec")<<std::endl;
     std::cout<<num.to_number("bin")<<std::endl;
 //    std::cout<<num.to_number("hex")<<std::endl;
-    uint::uint<N> num2("109");
+    Uint::uint<N> num2("109");
     auto mul=num*num2;
     std::cout<<mul.to_number("dec")<<std::endl;
     }catch(std::exception &e){
@@ -157,14 +157,34 @@ void check_int()
     std::cout<<"run correctly"<<std::endl;
 }
 
+void checkplusstring()
+{
+    Uint::uint<N> a("123");
+    a=a+"123";
+    std::cout<<a<<std::endl;
+}
+
+// void check_ufloat()
+// {
+// 	Ufloat::ufloat<20> a;
+// 	a=123;
+// 	Ufloat::ufloat<20> b(22);
+// 	a=a+b;
+//     std::cout<<a<<std::endl;
+// 	// a<<=1;
+// }
+
 int main()
 {
 //    check();
-    freopen("F:/WorkSpace/OOP/Experiment/big_integer_test/inputs.txt","r",stdin);
-    freopen("F:/WorkSpace/OOP/Experiment/big_integer_test/output.txt","w",stdout);
+    // freopen("F:/WorkSpace/OOP/Experiment/big_integer_test/inputs.txt","r",stdin);
+    // freopen("F:/WorkSpace/OOP/Experiment/big_integer_test/output.txt","w",stdout);
 	// check_int();
-    uint::uint<N> a;
-    uint::uint<N> b;
+//    checkplusstring();
+	// check_ufloat();
+    return 0;
+    Uint::uint<N> a;
+    Uint::uint<N> b;
     // a<<=1;
 
     char ope;

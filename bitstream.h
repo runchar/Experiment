@@ -823,7 +823,7 @@ namespace BitSet
     }
 }
 
-namespace uint{
+namespace Uint{
 	using namespace BitSet;
     using ULL = unsigned long long;
 	template <size_t N>
@@ -893,9 +893,8 @@ namespace uint{
             return *this+tmp;
         }
 
-        uint operator +(const char * y) const{
-            uint tmp(y,strlen(y),'0','1');
-            // throw "not implemented";
+        uint operator +(std::string y) const{
+            uint tmp(y);
             return *this+tmp;
         }
 
@@ -920,9 +919,10 @@ namespace uint{
             return *this-tmp;
         }
 
-        uint operator -(const char * y) const{
-            uint tmp(y,strlen(y),'0','1');
+        uint operator -(std::string y) const{
+            // uint tmp(y,strlen(y),'0','1');
             // throw "not implemented";
+            uint tmp(y);
             return *this-tmp;
         }
         // overflow deal same with unsigned integer
@@ -1032,5 +1032,113 @@ namespace uint{
         }
     };
 }
-// []  &
-// constructor (ULL)
+
+/*
+//Fixed-length unsigned floating point type
+namespace Ufloat{
+    using namespace Uint;
+    using ULL = unsigned long long;
+    using exp_type =  long long;
+    template<size_t N>
+    class ufloat : public uint<N*2>{
+	    public:
+			exp_type  exp;
+		public:
+            ufloat(){
+                exp = 0;
+            }
+
+            ufloat(ULL n){
+                Uint::uint<N> tmp(n);
+                *this = tmp;
+                exp = 0;
+            }
+
+            ufloat(const char *s, size_t n, char zero, char one){
+                Uint::uint<N> tmp(s,n,zero,one);
+                *this = tmp;
+                exp = 0;
+            }
+
+            ufloat(std::string s){
+                Uint::uint<N> tmp(s);
+                *this = tmp;
+                exp = 0;
+            }
+
+            ufloat(const ufloat &y){
+                Uint::uint<N> tmp(y);
+                *this = tmp;
+                exp = y.exp;
+            }
+
+            ~ufloat() = default;
+
+            ufloat &operator = (Uint::uint<N> &x) {
+                this->SizeOfType = x.getSizeOfType();
+                this->SizeOfBit = x.getSizeOfBit();
+                memcpy(this->bitset,x.getBitset(),N/8+1);
+                exp = 0;
+                return *this;
+            }
+
+            friend void align(ufloat &x,ufloat &y){
+                if(x.exp>y.exp)
+                {
+                    x<<=(x.exp-y.exp);
+                    x.exp=y.exp;
+                }else{
+                    y<<=(y.exp-x.exp);
+                    y.exp=x.exp;
+                }
+            }
+
+            void ZeroClear(){
+                exp_type cnt=0;
+                for(auto it=this->begin();it!=this->end();it++)
+                {
+                    if(static_cast<bool>(*it)==0)
+                    {
+                        cnt++;
+                    }else{
+                        break;  
+                    }
+                }
+                this->exp+=cnt;
+                *this>>=cnt;
+            }
+
+            ufloat operator +(const ufloat & y) const{
+                ufloat tmpx=*this;
+                ufloat tmpy=y;
+                align(tmpx,tmpy);
+				ufloat tmp;
+				tmp.exp=tmpx.exp;
+				auto it=tmp.begin();
+				auto itx=this->cbegin();
+				auto ity=y.cbegin();
+                bool CarryBit=false;
+                for(auto end=tmp.end();it!=end;it++,itx++,ity++)
+                {
+                    bool val_x=static_cast<bool>(*itx);
+                    bool val_y=static_cast<bool>(*ity);
+                    (*it)=(bool)(val_x^val_y^CarryBit);
+                    CarryBit=(val_x&val_y)||(val_x&CarryBit)||(CarryBit&val_y);
+                }
+                tmp.ZeroClear();
+                return tmp;
+            }
+
+            ufloat operator +(const ULL & y) const{
+                ufloat tmp(y);
+                return *this+tmp;
+            }
+
+            ufloat operator +(std::string y) const{
+                ufloat tmp(y);
+                return *this+tmp;
+            }
+
+    };
+}
+*/
