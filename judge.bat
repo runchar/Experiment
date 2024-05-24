@@ -1,25 +1,10 @@
 @echo off
 
-setlocal EnableDelayedExpansion
+python big_integer_test\make.py
 
-@REM set g++="C:\MinGW\bin\g++.exe"
-@REM set linker="C:\MinGW\bin\g++.exe"
+@REM g++ -o -std=c++2b main main.cpp
+output\main.exe
 
-g++ main.cpp -std=c++2b -o main.exe
-g++ test.cpp -std=c++2b -o test.exe
-
-main.exe > main_output.txt
-test.exe > test_output.txt
-
-fc /w main_output.txt test_output.txt > compare_result.txt
-
-if %errorlevel% == 0 (
-    echo s
-) else (
-    echo w
-    type compare_result.txt
-)
+python big_integer_test\compare.py
 
 pause
-
-del main.exe test.exe main_output.txt test_output.txt compare_result.txt

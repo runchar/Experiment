@@ -427,7 +427,7 @@ namespace BitSet
                     }
                     else
                     {
-                        throw "invalid_arguments"; //????
+                        throw std::runtime_error("invalid_arguments"); //????
                     }
                     BitsCnt++;
                 }
@@ -585,6 +585,11 @@ namespace BitSet
             return s;
         }
 
+        virtual std::string OstreamString() const
+        {
+            return this->to_string();
+        }
+
         iterator begin()
         {
             return make_iter(0);
@@ -655,7 +660,7 @@ namespace BitSet
         bits &operator&=(const bits &y)
         {
             if (SizeOfBit != y.SizeOfBit || SizeOfType != y.SizeOfType)
-                throw "different_size";
+                throw std::runtime_error("different_size");
             for (ULL i = 0; i < SizeOfType; i++)
             {
                 bitset[i] = bitset[i] & y.bitset[i];
@@ -666,7 +671,7 @@ namespace BitSet
         bits &operator|=(const bits &y)
         {
             if (SizeOfBit != y.SizeOfBit || SizeOfType != y.SizeOfType)
-                throw "different_size";
+                throw std::runtime_error("different_size");
             for (ULL i = 0; i < SizeOfType; i++)
             {
                 bitset[i] = bitset[i] | y.bitset[i];
@@ -677,7 +682,7 @@ namespace BitSet
         bits &operator^=(const bits &y)
         {
             if (SizeOfBit != y.SizeOfBit || SizeOfType != y.SizeOfType)
-                throw "different_size";
+                throw std::runtime_error("different_size");
             for (ULL i = 0; i < SizeOfType; i++)
             {
                 bitset[i] = bitset[i] ^ y.bitset[i];
@@ -764,7 +769,7 @@ namespace BitSet
     template <size_t N>
     std::ostream &operator<<(std::ostream &out, const bits<N> &_bit)
     {
-        std::string s = _bit.to_string();
+        std::string s = _bit.OstreamString();
         out << s;
         return out;
     }
@@ -818,42 +823,55 @@ namespace BitSet
     }
 }
 
-namespace Inter{
+namespace uint{
 	using namespace BitSet;
     using ULL = unsigned long long;
 	template <size_t N>
-	class Inter : public bits<N>{
+	class uint : public bits<N>{
     public:
 
-        Inter(){};
+        uint(){};
 
-		Inter(ULL n){
+		uint(ULL n){
 			bits<N> tmp(n);
 			*this=tmp;
 		}
 
-        Inter(const char *s, size_t n, char zero, char one){
+        uint(const char *s, size_t n, char zero, char one){
             bits<N> tmp(s,n,zero,one);
             *this=tmp;
         }
 
-        Inter(const Inter &y){
+        uint(std::string s){
+            size_t len=s.size();
+            uint Pow(1);
+            uint tmp(0);
+            for(int i=len-1;i>=0;i--)
+            {
+                uint tmp2(s[i]-'0');
+                tmp=tmp+tmp2*Pow;
+                Pow=Pow*10;
+            }
+            *this=tmp;
+        }
+
+        uint(const uint &y){
             bits<N> tmp(y);
             *this=tmp;
         }
 
-        ~Inter()=default;
+        ~uint()=default;
 
         //坑,为了避免getBitset()的 const问题这里会有意外修改的风险
-        Inter &operator = ( BitSet::bits<N> &x) {
+        uint &operator = ( BitSet::bits<N> &x) {
             this->SizeOfType = x.getSizeOfType();
 			this->SizeOfBit = x.getSizeOfBit();
 			memcpy(this->bitset,x.getBitset(),N/8+1);
             return *this;
         } 
 
-        Inter operator +(const Inter & y) const{
-            Inter tmp;
+        uint operator +(const uint & y) const{
+            uint tmp;
             auto it=tmp.begin();
             auto itx=this->cbegin();
             auto ity=y.cbegin();
@@ -870,18 +888,19 @@ namespace Inter{
 			return tmp;
         }
 
-        Inter operator +(const ULL & y) const{
-            Inter tmp(y);
+        uint operator +(const ULL & y) const{
+            uint tmp(y);
             return *this+tmp;
         }
 
-        Inter operator +(const char * y) const{
-            Inter tmp(y,strlen(y),'0','1');
+        uint operator +(const char * y) const{
+            uint tmp(y,strlen(y),'0','1');
+            // throw "not implemented";
             return *this+tmp;
         }
 
-        Inter operator -(const Inter & y) const{
-            Inter tmp;
+        uint operator -(const uint & y) const{
+            uint tmp;
             auto it=tmp.begin();
             auto itx=this->cbegin();
             auto ity=y.cbegin();
@@ -896,22 +915,22 @@ namespace Inter{
             return tmp;
         }
 
-        Inter operator -(const ULL & y) const{
-            Inter tmp(y);
+        uint operator -(const ULL & y) const{
+            uint tmp(y);
             return *this-tmp;
         }
 
-        Inter operator -(const char * y) const{
-            Inter tmp(y,strlen(y),'0','1');
+        uint operator -(const char * y) const{
+            uint tmp(y,strlen(y),'0','1');
+            // throw "not implemented";
             return *this-tmp;
         }
         // overflow deal same with unsigned integer
 
-        std::pair<Inter,int> operator /(const Inter & divisor) const{
-            Inter divi = *this;
-            Inter quo;
-            Inter rem;
-            int mod=0;
+        std::pair<uint,uint> operator /(const uint & divisor) const{
+            uint divi = *this;
+            uint quo;
+            uint rem;
             for(auto it=divi.end()-1;it>=divi.begin();it--)
             {
                 rem<<=1;
@@ -925,37 +944,60 @@ namespace Inter{
                     // mod=std::max(mod,std::stoi(rem.to_string(),nullptr,2));
                 }
             }
-            mod=std::stoi(rem.to_string(),nullptr,2);
-            return {quo,mod};
+            // mod=std::stoi(rem.to_string(),nullptr,2);
+            return {quo,rem};
         }
 
-        std::string to_number( const char *op )
-        {
-            if(op=="dec")
+        uint operator *(const uint & y) const{
+            uint tmp;
+            size_t limit=tmp.getSizeOfBit();
+
+            for(auto it=this->cbegin();it!=this->cend();it++)
             {
-                Inter stan(10);
-                Inter x=*this;
-                std::cout<<x.to_string()<<std::endl<<std::endl;
+                if(*it)
+                {
+                    uint tmp2=y;
+                    tmp2<<=it-this->cbegin();
+                    tmp=tmp+tmp2;
+                }
+            }
+            return tmp;
+        }
+
+        std::string to_number( const char *op ) const {
+            if(op==std::string("dec"))
+            {
+                uint stan(10);
+                uint x=*this;
+                // std::cout<<x.to_string()<<std::endl<<std::endl;
                 std::string num;
                 while(x>stan)
                 {
                     auto [tmp,mod]=x/stan;
-                    num+=mod+'0';
+                    int num_tmp=(std::stoi(mod.to_string(),nullptr,2));
+                    // std::cout<<num_tmp<<std::endl;
+                    num+=(char)(num_tmp+'0');
                     x=tmp;
                     // std::cout<<num<<std::endl;
                     // std::cout<<x.to_string()<<std::endl;
                 }
-                num+=std::stoi(x.to_string(),nullptr,2)+'0';
+                int num_tmp=std::stoi(x.to_string(),nullptr,2);
+                if(num_tmp==10)
+                {
+                    num+="01";
+                }else{
+                    num+=(char)(num_tmp+'0');
+                }
                 std::reverse(num.begin(), num.end());
                 return num;
             }
 
-            if(op=="bin")
+            if(op==std::string("bin"))
             {
                 return this->to_string();
             }
 
-            if(op=="hex")
+            if(op==std::string("hex"))
             {
                 std::string hex;
                 /*
@@ -965,7 +1007,30 @@ namespace Inter{
                 return hex;
             }
         }
-	};
+
+		virtual std::string OstreamString() const{
+			return this->to_number("dec");
+		}
+
+    private:
+        friend std::ostream &operator<<(std::ostream &out, uint &x)
+        {
+            // out<<x.to_number("dec");
+            std::string s=x.to_number("dec");
+            out<<s;
+            return out;
+        }
+
+        friend std::istream &operator>>(std::istream &in, uint &x)
+        {
+            std::string s;
+            if(in>>s)
+            {
+                x=uint(s);
+            }else throw std::runtime_error("invalid_input");
+            return in;
+        }
+    };
 }
 // []  &
 // constructor (ULL)

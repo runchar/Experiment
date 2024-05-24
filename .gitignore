@@ -7,4 +7,5 @@
 *.out
 *.fls
 *.fdb_latexmk
+*.py
 

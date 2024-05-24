@@ -65,3 +65,23 @@ solve: using storage_pointer = typename std::conditional_t<is_const,typename ori
     解决:
     忘记加返回值了,但是为什么会运行错误在for循环里边??
 
+#### UB
+            if(op=="bin")
+            {
+                return this->to_string();
+            }
+
+            	const char * s="Hello";
+            //
+                if(s=="Hello")
+                {
+                    std::cout<<"Yes"<<std::endl;
+                }else{
+                    std::cout<<"No"<<std::endl;
+                }
+                system("pause");
+                return 0;
+
+你的代码中可能存在一个问题，那就是使用 == 运算符比较字符串字面量。在 C++ 中，这种比较可能会导致未定义的行为。
+
+###### 使用std::string 而不是const char *, C++ 对于std::string 的重载与支持比较完备,也可以防止UB 的产生

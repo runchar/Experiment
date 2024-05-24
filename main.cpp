@@ -11,7 +11,7 @@
 #include <compare>
 #include <algorithm>
 
-const int N = 10;
+const int N = 190;
 using bits_type = BitSet::bits<N>;
 // using bits_type = std::bitset<N>;
 std::map<std::string, bits_type> M;
@@ -113,7 +113,7 @@ void check()
 void check_it()
 {
     // BitSet::bits<N> a(10);
-    Inter::Inter<N> a(10);
+    uint::uint<N> a(10);
     std::cout << a << std::endl;
 
     for(auto it=a.begin();it!=a.end();it++)
@@ -126,15 +126,15 @@ void check_it()
 void check_int()
 {
 
-    check_it();
+    // check_it();
 
-	Inter::Inter<N> a(13);
-    Inter::Inter<N> b=a;
+	uint::uint<N> a(13);
+    uint::uint<N> b=a;
     BitSet::bits aa=a;
     std::cout<<aa<<std::endl;
     aa=b;
     std::cout<<aa<<std::endl;
-    Inter::Inter<N> c("01111",5,'0','1');
+    uint::uint<N> c("01111",5,'0','1');
     aa=c;
     std::cout<<aa<<std::endl;
     try{
@@ -144,10 +144,13 @@ void check_int()
     auto e=b-"10";
     aa=e;
     std::cout<<aa<<std::endl;
-    Inter::Inter<N> num(123);
+    uint::uint<N> num("123");
     std::cout<<num.to_number("dec")<<std::endl;
     std::cout<<num.to_number("bin")<<std::endl;
-    std::cout<<num.to_number("hex")<<std::endl;
+//    std::cout<<num.to_number("hex")<<std::endl;
+    uint::uint<N> num2("109");
+    auto mul=num*num2;
+    std::cout<<mul.to_number("dec")<<std::endl;
     }catch(std::exception &e){
         std::cout<<e.what()<<std::endl;
     }
@@ -156,159 +159,39 @@ void check_int()
 
 int main()
 {
-
 //    check();
-	    check_int();
-	system("pause");
+    freopen("F:/WorkSpace/OOP/Experiment/big_integer_test/inputs.txt","r",stdin);
+    freopen("F:/WorkSpace/OOP/Experiment/big_integer_test/output.txt","w",stdout);
+	// check_int();
+    uint::uint<N> a;
+    uint::uint<N> b;
+    // a<<=1;
 
-    return 0;
-
-    // freopen("in.txt", "r", stdin);
-    std::string op;
-    while (std::cin >> op)
+    char ope;
+    while(std::cin>>ope)
     {
-        // Part 1
-        std::string x;
-        std::cin >> x;
-        if (op == "bitset")
+        std::cin>>a>>b;
+        switch (ope)
         {
-            M[x] = bits_type();
-        }
-        if (op == "bitset_s")
-        {
-            std::string s;
-            char z, o;
-            std::cin >> s >> z >> o;
-            auto temp = bits_type(s.c_str(), s.length(), z, o);
-            M[x] = temp;
-        }
-        if (op == "bitset_u")
-        {
-            unsigned long long u;
-            std::cin >> u;
-            M[x] = bits_type(u);
-        }
-        if (op == "test")
-        {
-            std::cout << M[x].to_string() << std::endl;
-        }
-        if (op == "count")
-        {
-            std::cout << M[x].count() << std::endl;
-        }
-        if (op == "all")
-        {
-            std::cout << M[x].all() << std::endl;
-        }
-        if (op == "any")
-        {
-            std::cout << M[x].any() << std::endl;
-        }
-        if (op == "none")
-        {
-            std::cout << M[x].none() << std::endl;
-        }
-        if (op == "flipall")
-        {
-            M[x].flip();
-        }
-        if (op == "setall")
-        {
-            M[x].set();
-        }
-        if (op == "resetall")
-        {
-            M[x].reset();
-        }
-        if (op == "less")
-        {
-            std::string y;
-            std::cin >> y;
-            std::cout << (x < y) << std::endl;
-        }
-        if (op == "ANDS")
-        {
-            std::string a, b;
-            std::cin >> a >> b;
-            M[x] = M[a] & M[b];
-        }
-        if (op == "ORS")
-        {
-            std::string a, b;
-            std::cin >> a >> b;
-            M[x] = M[a] | M[b];
-        }
-        if (op == "XORS")
-        {
-            std::string a, b;
-            std::cin >> a >> b;
-            M[x] = M[a] ^ M[b];
-        }
-        if (op == "LSS")
-        {
-            std::string a;
-            size_t b;
-            std::cin >> a >> b;
-            M[x] = M[a] << b;
-        }
-        if (op == "RSS")
-        {
-            std::string a;
-            size_t b;
-            std::cin >> a >> b;
-            M[x] = M[a] >> b;
-        }
-        if (op == "NOTS")
-        {
-            std::string a;
-            std::cin >> a;
-            M[x] = ~M[a];
-        }
-        if (op == "AND")
-        {
-            std::string a, b;
-            std::cin >> b;
-            auto temp = M[x] & M[b];
-            std::cout << temp << std::endl;
-        }
-        if (op == "OR")
-        {
-            std::string a, b;
-            std::cin >> b;
-            auto temp = M[x] | M[b];
-            std::cout << temp << std::endl;
-        }
-        if (op == "XOR")
-        {
-            std::string a, b;
-            std::cin >> b;
-            auto temp = M[x] ^ M[b];
-            std::cout << temp << std::endl;
-        }
-        if (op == "NOT")
-        {
-            std::string a;
-            auto temp = ~M[x];
-            std::cout << temp << std::endl;
-        }
-        if (op == "LE")
-        {
-            std::string a, b;
-            std::cin >> b;
-            std::cout << (M[x] < M[b]) << std::endl;
-        }
-        if (op == "EQ")
-        {
-            std::string a, b;
-            std::cin >> b;
-            std::cout << (M[x] == M[b]) << std::endl;
-        }
-        if (op == "GR")
-        {
-            std::string a, b;
-            std::cin >> b;
-            std::cout << (M[x] > M[b]) << std::endl;
+        case '+':
+            std::cout<<a+b<<std::endl;
+            break;
+        case '-':
+            std::cout<<a-b<<std::endl;
+            break;
+        case '*':
+            std::cout<<a*b<<std::endl;
+            break;
+        case '/':
+            std::cout<<(a/b).first<<std::endl;
+            break;
+        case '%':
+            std::cout<<(a/b).second<<std::endl;
+            break;
+        default:
+            break;
         }
     }
+	system("pause");
     return 0;
 }
