@@ -7,13 +7,41 @@
   * 除法的实现是带余除法 
 - 从十进制字符串的流式输入输出
 
-### 一些特性
+### 处理
 
 - 处理流式输出,受限于操作数位置,只能将重载`<<`作为友元函数处理,但是声明为友元函数则
 无法直接重写以实现多态,考虑使用虚成员函数`OstreamString`为流式输出提供字符串
 通过重写`OstreamString`间接实现多态
 - 相较于`const char *`使用了`std::string`,一方面后者功能更完备,二则`std::string`的转换比较灵活
 使用`const char *`容易出现未定义行为
+- 利用RAII机制的一个记录运行时间的类(~~主要是不会用性能分析工具~~)
+```cpp
+class  LifetimeTracker {
+private:
+    static int cnt;
+    std::chrono::high_resolution_clock::time_point s;
+    std::chrono::steady_clock::time_point e;
+    const char * name;
+
+public:
+     LifetimeTracker(const char* name){s = std::chrono::high_resolution_clock::now();  this->name=name; cnt++;}
+
+    ~ LifetimeTracker() {
+        auto e = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(e - s).count();
+        printf("Object %s  Lifetime:   %lf   ms  \n",name, duration*1000);
+    }
+
+    static void  GetCnt() {
+        printf("The object has been invoked %d times\n", cnt);
+    }
+};
+```
+实现的第一版uint巨慢,跑一个$2^{500}$整数大概需要3500ms,但是`to_num`函数的时间复杂度应该介于$O(n^2)到O(n^3)$ ($2^n$转m位十进制的时间复杂度算的不是太清楚,但是肯定小于$O(n)$)
+
+遂寻找优化,通过给每个调用的方法内部实例化一个`LifetimeTracker`,通过调用析构函数的时间判断方法的运行时间,发现`<=`的耗时异常,约为0.003ms,是其他同时间复杂度函数的3-5倍,后来发现是之前重载`<=>`时用的是先转字符串再比较,会多一次遍历和其他额外内存开销.后重写一个按位比较函数,快了5倍...
+
+
 
 ### 坑
 - `const_iterator`

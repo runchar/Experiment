@@ -11,10 +11,11 @@
 #include <compare>
 #include <algorithm>
 
-const int N = 190;
+const int N = 510;
 using bits_type = BitSet::bits<N>;
 // using bits_type = std::bitset<N>;
 std::map<std::string, bits_type> M;
+// int LifetimeTracker::cnt = 0;
 
 void check()
 {
@@ -159,9 +160,11 @@ void check_int()
 
 void checkplusstring()
 {
-    Uint::uint<N> a("123");
-    a=a+"123";
+    // LifetimeTracker it("checkplusstring");
+    Uint::uint<N> a("230333443893940463737662995679631952925221036477720877113991264888593947382997597310976833412159902073652265280796997983849145792035069602497765746058");
+    // a=a+"143";
     std::cout<<a<<std::endl;
+    // LifetimeTracker::GetCnt();
 }
 
 // void check_ufloat()
@@ -177,19 +180,20 @@ void checkplusstring()
 int main()
 {
 //    check();
-    // freopen("F:/WorkSpace/OOP/Experiment/big_integer_test/inputs.txt","r",stdin);
-    // freopen("F:/WorkSpace/OOP/Experiment/big_integer_test/output.txt","w",stdout);
+    freopen("F:/WorkSpace/OOP/Experiment/big_integer_test/inputs.txt","r",stdin);
+    freopen("F:/WorkSpace/OOP/Experiment/big_integer_test/output.txt","w",stdout);
 	// check_int();
-//    checkplusstring();
+    // checkplusstring();
 	// check_ufloat();
-    return 0;
+    // return 0;
     Uint::uint<N> a;
     Uint::uint<N> b;
     // a<<=1;
-
+    // LifetimeTracker lt("global");
     char ope;
     while(std::cin>>ope)
     {
+        //  LifetimeTracker lt;
         std::cin>>a>>b;
         switch (ope)
         {

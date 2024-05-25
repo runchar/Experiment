@@ -85,3 +85,12 @@ solve: using storage_pointer = typename std::conditional_t<is_const,typename ori
 你的代码中可能存在一个问题，那就是使用 == 运算符比较字符串字面量。在 C++ 中，这种比较可能会导致未定义的行为。
 
 ###### 使用std::string 而不是const char *, C++ 对于std::string 的重载与支持比较完备,也可以防止UB 的产生
+
+##### 
+The object has been invoked 184164 times
+Object checkplusstring lifetime:   3162.788200   ms  
+>=  
+
+The object has been invoked 108174 times
+Object checkplusstring lifetime:   647.713000   ms  
+if(rem.BiggerOrEqual(divisor))

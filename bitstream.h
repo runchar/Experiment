@@ -5,6 +5,28 @@
 
 #include <compare>
 #include <algorithm>
+#include <chrono>
+
+class  LifetimeTracker {
+private:
+    static int cnt;
+    std::chrono::high_resolution_clock::time_point s;
+    std::chrono::steady_clock::time_point e;
+    const char * name;
+
+public:
+     LifetimeTracker(const char* name){s = std::chrono::high_resolution_clock::now();  this->name=name; cnt++;}
+
+    ~ LifetimeTracker() {
+        auto e = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(e - s).count();
+        printf("Object %s  Lifetime:   %lf   ms  \n",name, duration*1000);
+    }
+
+    static void  GetCnt() {
+        printf("The object has been invoked %d times\n", cnt);
+    }
+};
 
 namespace BitSet
 {
@@ -188,11 +210,6 @@ namespace BitSet
             if (n < 0)
                 return *this -= -n;
 
-            // if(n+seg*origin::length+offset>origin::SizeOfType)
-            // {
-            //     throw std::runtime_error("out of range");
-            // }
-
             difference_type seg_offset = n / origin::length;
             n %= origin::length;
 
@@ -214,9 +231,6 @@ namespace BitSet
                 return *this += -n;
             difference_type seg_offset = n / origin::length;
             n %= origin::length;
-
-            // if(seg-seg_offset < 0)
-            //     throw std::out_of_range("out of range");
 
             if (offset < n)
             {
@@ -432,8 +446,6 @@ namespace BitSet
                     BitsCnt++;
                 }
             }
-            // if(BitsCnt!=n)
-            //     throw "wrong_length";
         }
 
         // copy constructor
@@ -455,11 +467,8 @@ namespace BitSet
         member functions
         */
 
-        bool test(size_t p) const
-        { // compare with [] ,test is read only
-            // if(p>=SizeOfBit)
-            //     throw "beyond";
-            // else
+        bool test(size_t p)  const
+        { 
             return (bitset[p / length] & (size_t(1) << (p % length)));
         }
 
@@ -534,6 +543,16 @@ namespace BitSet
             return *this;
         }
 
+        void flip(size_t p,bool x)
+        {
+            {
+                if (x)
+                    bitset[p / length] = bitset[p / length] | (size_t(1) << (p % length)); // set 1
+                else
+                    bitset[p / length] = bitset[p / length] & ~(size_t(1) << (p % length)); // set 0
+            }
+        }
+
         bits &set()
         {
             for (ULL i = 0; i < SizeOfType; i++)
@@ -560,9 +579,6 @@ namespace BitSet
 
         bool compare(const bits &y) const
         {
-            // if(SizeOfBit!=y.SizeOfBit||SizeOfType!=y.SizeOfType)
-            //     throw "different_size";// why throw exception cause runtime error
-            // return false;
             for (ULL i = 0; i < SizeOfType; i++) // !!!compare with B may compare uesless bits
             {                                    // has been solved ^_^
                 if (bitset[i] != y.bitset[i])
@@ -570,6 +586,16 @@ namespace BitSet
             }
             return true;
             // I think it has no ues
+        }
+
+         bool BiggerOrEqual(const bits &y)
+        {
+            for (ULL i = 0; i < SizeOfType; i++) 
+            {                                    
+                if (bitset[i] < y.bitset[i])
+                    return false;
+            }
+            return true;
         }
 
         std::string to_string() const
@@ -712,6 +738,7 @@ namespace BitSet
 
         bits &operator<<=(size_t n)
         {
+            // LifetimeTracker lt("operator<<=");
             if (n >= SizeOfBit)
             {
                 this->reset();
@@ -754,7 +781,7 @@ namespace BitSet
     template <size_t N>
     std::strong_ordering operator<=>(const bits<N> &x, const bits<N> &y)
     {
-        // wait to be implemented
+        // LifetimeTracker lt("operator<=>");
         std::string compare_temp_x = x.to_string();
         std::string compare_temp_y = y.to_string();
         if (compare_temp_x == compare_temp_y)
@@ -843,6 +870,7 @@ namespace Uint{
         }
 
         uint(std::string s){
+            // LifetimeTracker lt("uint(std::string s)");
             size_t len=s.size();
             uint Pow(1);
             uint tmp(0);
@@ -914,20 +942,31 @@ namespace Uint{
             return tmp;
         }
 
+        void operator -=(const uint & y) {
+            // LifetimeTracker lt("operator -=");
+            bool BorrowBit=false;
+            for(auto i=0,end=this->getSizeOfBit();i<end;i++)
+            {
+                bool val_x=(this->test(i));
+                bool val_y=y.test(i);
+                this->flip(i,(val_x^val_y^BorrowBit));      
+                BorrowBit=(~val_x&val_y)|((~val_x|val_y)&BorrowBit);       
+            }
+        }
+
         uint operator -(const ULL & y) const{
             uint tmp(y);
             return *this-tmp;
         }
 
         uint operator -(std::string y) const{
-            // uint tmp(y,strlen(y),'0','1');
-            // throw "not implemented";
             uint tmp(y);
             return *this-tmp;
         }
         // overflow deal same with unsigned integer
 
         std::pair<uint,uint> operator /(const uint & divisor) const{
+            // // LifetimeTracker lt;
             uint divi = *this;
             uint quo;
             uint rem;
@@ -935,22 +974,40 @@ namespace Uint{
             {
                 rem<<=1;
                 rem[0]=*it;
-                if(rem>=divisor)
+                if(rem.BiggerOrEqual(divisor))
                 {
                     rem=rem-divisor;
                     quo[it-divi.begin()]=1;
                 }else{
                     quo[it-divi.begin()]=0;
-                    // mod=std::max(mod,std::stoi(rem.to_string(),nullptr,2));
                 }
             }
-            // mod=std::stoi(rem.to_string(),nullptr,2);
             return {quo,rem};
+        }
+
+        int div_tran(uint & divisor) {
+            // LifetimeTracker it("div_tran");
+            uint divi = *this;
+            uint rem;
+            for(long long i=divi.getSizeOfBit()-1; i>=0;i--)
+            {
+                rem<<=1;
+                rem[0]=divi.test(i);
+                if(rem.BiggerOrEqual(divisor))
+                // if(rem>=divisor)
+                {
+                    rem-=divisor;
+                    this->flip(i,1);
+                }else{
+                    this->flip(i,0);
+                }
+            }
+
+            return std::stoi(rem.to_string(),nullptr,2);
         }
 
         uint operator *(const uint & y) const{
             uint tmp;
-            size_t limit=tmp.getSizeOfBit();
 
             for(auto it=this->cbegin();it!=this->cend();it++)
             {
@@ -969,17 +1026,11 @@ namespace Uint{
             {
                 uint stan(10);
                 uint x=*this;
-                // std::cout<<x.to_string()<<std::endl<<std::endl;
                 std::string num;
-                while(x>stan)
+                while(x>stan)  //O(N <)
                 {
-                    auto [tmp,mod]=x/stan;
-                    int num_tmp=(std::stoi(mod.to_string(),nullptr,2));
-                    // std::cout<<num_tmp<<std::endl;
+                    int num_tmp=x.div_tran(stan);   
                     num+=(char)(num_tmp+'0');
-                    x=tmp;
-                    // std::cout<<num<<std::endl;
-                    // std::cout<<x.to_string()<<std::endl;
                 }
                 int num_tmp=std::stoi(x.to_string(),nullptr,2);
                 if(num_tmp==10)
