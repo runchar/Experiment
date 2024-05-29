@@ -7,4 +7,5 @@ include_directories(.)
 
 add_executable(Experiment
         bitstream.h
-        main.cpp)
+        main.cpp
+        ../../Experiment/bitstream.h)

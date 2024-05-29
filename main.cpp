@@ -1,4 +1,5 @@
 #pragma GCC optimize (3)
+#pragma GCC optimize ("Ofast")
 #include <iostream>
 #include <map>
 #include <compare>
@@ -12,7 +13,7 @@
 #include <compare>
 #include <algorithm>
 
-const int N = 510;
+const int N = 1001;
 using bits_type = BitSet::bits<N>;
 // using bits_type = std::bitset<N>;
 std::map<std::string, bits_type> M;
@@ -178,14 +179,28 @@ void checkplusstring()
 // 	// a<<=1;
 // }
 
+
+void check_add()
+{
+    Uint::uint<100> a=(18446744073709551615);
+    Uint::uint<100> b(10);
+    Uint::uint<100> c=a+b;
+    std::cout<<c<<std::endl;
+}
+
+
 int main()
 {
 //    check();
     freopen("F:/WorkSpace/OOP/Experiment2/Experiment/big_integer_test/inputs.txt","r",stdin);
     freopen("F:/WorkSpace/OOP/Experiment2/Experiment/big_integer_test/output.txt","w",stdout);
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(0);
+    std::cout.tie(0);
 	// check_int();
     // checkplusstring();
 	// check_ufloat();
+    // check_add();
     // return 0;
     Uint::uint<N> a;
     Uint::uint<N> b;
@@ -193,10 +208,11 @@ int main()
     char ope;
     while(std::cin>>ope)
     {
-        //  LifetimeTracker lt;
+        //  LifetimeTracker lt("cla");
         std::cin>>a>>b;
         switch (ope)
         {
+            // LifetimeTracker lt();
         case '+':
             std::cout<<a+b<<std::endl;
             break;

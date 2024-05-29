@@ -322,10 +322,11 @@ namespace BitSet
 		using const_storage_pointer = const storage_type *;
         using ULL = unsigned long long;
         static const ULL length = sizeof(storage_type) * 8; // length of storage_type in bits
+        storage_type bitset[N];
     protected:
         ULL SizeOfType = 0; // size of storage_type
         size_t SizeOfBit;   // size of bitset in bits// uesd to judge if beyond
-        storage_type bitset[N];
+
         // storage_pointer bitset=storage_bitset;
 
         using reference = bit_reference<bits<N>>;
@@ -338,6 +339,7 @@ namespace BitSet
         friend class bit_const_reference<bits<N>>;
         friend class bit_iterator<bits<N>,false>;
         friend class bit_iterator<bits<N>,true>;
+        // friend class uint<bits<N>>
 
         template <size_t M>
         friend std::strong_ordering operator<=>(const bits<M> &x, const bits<M> &y);
@@ -603,7 +605,7 @@ namespace BitSet
             std::string s;
             for (long long i = SizeOfBit - 1; i >= 0; i--)
             {
-                if (make_cref(i))
+                if(test(i))
                     s.push_back('1');
                 else
                     s.push_back('0');
@@ -775,22 +777,21 @@ namespace BitSet
 
         ULL getSizeOfType() const { return SizeOfType; }
         ULL getSizeOfBit() const { return SizeOfBit; }
-		storage_pointer getBitset() {return bitset;}
+		// const storage_pointer getBitset()  {return bitset;}
     };
 
     template <size_t N>
     std::strong_ordering operator<=>(const bits<N> &x, const bits<N> &y)
     {
-        // LifetimeTracker lt("operator<=>");
-        std::string compare_temp_x = x.to_string();
-        std::string compare_temp_y = y.to_string();
-        if (compare_temp_x == compare_temp_y)
-            return std::strong_ordering::equal;
-        else if (compare_temp_x > compare_temp_y)
-            return std::strong_ordering::greater;
-
-        else
-            return std::strong_ordering::less;
+        long long end=x.getSizeOfType()-1;
+        for(long long i=end;i>=0;i--)
+        {
+            if(x.bitset[i]>y.bitset[i])
+                return std::strong_ordering::greater;
+            else if(x.bitset[i]<y.bitset[i])
+                return std::strong_ordering::less;
+        }
+        return std::strong_ordering::equal;
     }
 
     template <size_t N>
@@ -870,50 +871,62 @@ namespace Uint{
         }
 
         uint(std::string s){
-            // LifetimeTracker lt("uint(std::string s)");
-            size_t len=s.size();
-            uint Pow(1);
-            uint tmp(0);
-            for(int i=len-1;i>=0;i--)
+            std::string ans0;
+            long long  cnt=0;
+            while(s.size())
             {
-                uint tmp2(s[i]-'0');
-                tmp=tmp+tmp2*Pow;
-                Pow=Pow*10;
+                std::string tmp;
+                int len=s.length(),r=0;
+                for(int i=0;i<len;i++){
+                    r=r*10+s[i]-'0';
+                    if(!(tmp.length()==0&&r<2)){
+                        tmp+=r/2+'0';
+                        r=r%2;
+                    }
+                }
+                s=tmp;
+                this->flip(cnt++,r);
             }
-            *this=tmp;
         }
 
-        uint(const uint &y){
-            bits<N> tmp(y);
-            *this=tmp;
+        uint(const uint &x){
+            this->SizeOfType = x.getSizeOfType();
+			this->SizeOfBit = x.getSizeOfBit();
+			memcpy(this->bitset,x.bitset,N/8+1);
         }
 
         ~uint()=default;
 
-        //坑,为了避免getBitset()的 const问题这里会有意外修改的风险
-        uint &operator = ( BitSet::bits<N> &x) {
+        uint &operator = (const BitSet::bits<N> &x) {
             this->SizeOfType = x.getSizeOfType();
 			this->SizeOfBit = x.getSizeOfBit();
-			memcpy(this->bitset,x.getBitset(),N/8+1);
+			memcpy(this->bitset,x.bitset,N/8+1);
             return *this;
         } 
 
-        uint operator +(const uint & y) const{
-            uint tmp;
-            auto it=tmp.begin();
-            auto itx=this->cbegin();
-            auto ity=y.cbegin();
-            bool CarryBit=false;
-            for(auto end=tmp.end();it!=end;it++,itx++,ity++)
+        uint operator +=(const uint & y) {
+            size_t maxx=0;
+            maxx=~maxx;
+            size_t carry=0;
+            for(long long i=0;i<y.getSizeOfType();i++)
             {
-                bool val_x=static_cast<bool>(*itx);
-                bool val_y=static_cast<bool>(*ity);
-                (*it)=(bool)(val_x^val_y^CarryBit);
-                CarryBit=(val_x&val_y)||(val_x&CarryBit)||(CarryBit&val_y);
+                if(maxx-this->bitset[i]<y.bitset[i]+carry||maxx-y.bitset[i]<this->bitset[i]+carry||this->bitset[i]+y.bitset[i]+carry>maxx)
+                {
+                    this->bitset[i]=this->bitset[i]+y.bitset[i]+carry-maxx-1;
+                    carry=1;
+                }else{
+                    this->bitset[i]=this->bitset[i]+y.bitset[i]+carry;
+                    carry=0;
+                }
             }
-            // BitSet::bits<N> tmp2=tmp;
-            // std::cout<<tmp2<<std::endl;
-			return tmp;
+            return *this;
+
+			return *this;
+        }
+
+        uint operator +(const uint & y) const{
+            uint tmp=*this;
+            return tmp+=y;
         }
 
         uint operator +(const ULL & y) const{
@@ -923,40 +936,29 @@ namespace Uint{
 
         uint operator +(std::string y) const{
             uint tmp(y);
-            return *this+tmp;
+            uint tmp2=*this;
+            return tmp2+tmp;
         }
 
         uint operator -(const uint & y) const{
-            uint tmp;
-            auto it=tmp.begin();
-            auto itx=this->cbegin();
-            auto ity=y.cbegin();
-            bool BorrowBit=false;
-            for(auto end=tmp.end();it!=end;it++,itx++,ity++)
-            {
-                bool val_x=static_cast<bool>(*itx);
-                bool val_y=static_cast<bool>(*ity);
-                (*it)=(bool)(val_x^val_y^BorrowBit);
-                BorrowBit=(~val_x&val_y)|((~val_x|val_y)&BorrowBit);
-            }
-            return tmp;
+            uint tmp=*this;
+            return tmp-=y;
         }
 
-        void operator -=(const uint & y) {
+        uint operator -=(const uint & y) {
             // LifetimeTracker lt("operator -=");
             bool BorrowBit=false;
 
             // --OH--
 
             for(auto i=0,end=this->getSizeOfBit();i<end;i++)
-			// auto end=this->getSizeOfBit();
-            // for(auto i=0;i<end;i++)
             {
                 bool val_x=(this->test(i));
                 bool val_y=y.test(i);
                 this->flip(i,(val_x^val_y^BorrowBit));      
                 BorrowBit=(~val_x&val_y)|((~val_x|val_y)&BorrowBit);       
             }
+            return *this;
         }
 
         uint operator -(const ULL & y) const{
@@ -964,64 +966,63 @@ namespace Uint{
             return *this-tmp;
         }
 
-        uint operator -(std::string y) const{
+        uint operator -(const std::string & y) const{
             uint tmp(y);
             return *this-tmp;
         }
         // overflow deal same with unsigned integer
 
         std::pair<uint,uint> operator /(const uint & divisor) const{
-            // // LifetimeTracker lt;
+            // LifetimeTracker lt;
             uint divi = *this;
             uint quo;
             uint rem;
-            for(auto it=divi.end()-1;it>=divi.begin();it--)
+            long long end=divi.getSizeOfBit();
+            for(long long i=end-1;i>=0;i--)
             {
                 rem<<=1;
-                rem[0]=*it;
-                // if(rem.BiggerOrEqual(divisor))
+                rem[0]=divi.test(i);
                 if(rem>=divisor)
                 {
                     rem=rem-divisor;
-                    quo[it-divi.begin()]=1;
+                    quo[i]=1;
                 }else{
-                    quo[it-divi.begin()]=0;
+                    quo[i]=0;
                 }
             }
             return {quo,rem};
         }
 
-        int div_tran(uint & divisor) {
+        int div_tran() {
             // LifetimeTracker it("div_tran");
-            uint divi = *this;
-            uint rem;
-            for(long long i=divi.getSizeOfBit()-1; i>=0;i--)
+            int rem=0;
+            for(long long i=this->getSizeOfBit()-1; i>=0;i--)
             {
                 rem<<=1;
-                rem[0]=divi.test(i);
-                if(rem.BiggerOrEqual(divisor))
-                // if(rem>=divisor)
+                if(this->test(i))
+                    rem++;
+                if(rem>=10)
                 {
-                    rem-=divisor;
+                    rem-=10;
                     this->flip(i,1);
                 }else{
                     this->flip(i,0);
                 }
             }
-
-            return std::stoi(rem.to_string(),nullptr,2);
+            return  rem;
         }
 
         uint operator *(const uint & y) const{
             uint tmp;
 
-            for(auto it=this->cbegin();it!=this->cend();it++)
+            long long end=this->getSizeOfBit();
+            for(long long i=0;i<end;i++)
             {
-                if(*it)
+                if(this->test(i))
                 {
                     uint tmp2=y;
-                    tmp2<<=it-this->cbegin();
-                    tmp=tmp+tmp2;
+                    tmp2<<=i;
+                    tmp+=tmp2;
                 }
             }
             return tmp;
@@ -1035,7 +1036,7 @@ namespace Uint{
                 std::string num;
                 while(x>stan)  //O(N <)
                 {
-                    int num_tmp=x.div_tran(stan);   
+                    int num_tmp=x.div_tran();   
                     num+=(char)(num_tmp+'0');
                 }
                 int num_tmp=std::stoi(x.to_string(),nullptr,2);

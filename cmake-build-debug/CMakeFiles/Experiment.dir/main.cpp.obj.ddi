@@ -5,7 +5,7 @@
         {
             "primary-output": "CMakeFiles\\Experiment.dir\\main.cpp.obj",
             "outputs": [
-                "F:\\WorkSpace\\OOP\\Experiment\\cmake-build-debug\\vc140.pdb",
+                "F:\\WorkSpace\\OOP\\Experiment2\\Experiment\\cmake-build-debug\\vc140.pdb",
                 "CMakeFiles\\Experiment.dir\\main.cpp.obj.ddi"
             ],
             "requires": []
