@@ -1,3 +1,4 @@
+#pragma GCC optimize (3)
 #include <iostream>
 #include <map>
 #include <compare>
@@ -15,7 +16,7 @@ const int N = 510;
 using bits_type = BitSet::bits<N>;
 // using bits_type = std::bitset<N>;
 std::map<std::string, bits_type> M;
-// int LifetimeTracker::cnt = 0;
+int LifetimeTracker::cnt = 0;
 
 void check()
 {
@@ -180,16 +181,15 @@ void checkplusstring()
 int main()
 {
 //    check();
-    freopen("F:/WorkSpace/OOP/Experiment/big_integer_test/inputs.txt","r",stdin);
-    freopen("F:/WorkSpace/OOP/Experiment/big_integer_test/output.txt","w",stdout);
+    freopen("F:/WorkSpace/OOP/Experiment2/Experiment/big_integer_test/inputs.txt","r",stdin);
+    freopen("F:/WorkSpace/OOP/Experiment2/Experiment/big_integer_test/output.txt","w",stdout);
 	// check_int();
     // checkplusstring();
 	// check_ufloat();
     // return 0;
     Uint::uint<N> a;
     Uint::uint<N> b;
-    // a<<=1;
-    // LifetimeTracker lt("global");
+    LifetimeTracker lt("global");
     char ope;
     while(std::cin>>ope)
     {

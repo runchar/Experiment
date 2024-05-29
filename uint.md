@@ -105,7 +105,7 @@ message": "invalid conversion from 'const BitSet::bits<500>::storage_type*' {aka
 
 这个函数没有返回值!!!(加上return之后可以正常运行)
 
-一般而言,声明有返回值的函数缺少返回值编译器会报错才对,但是这个错误却没有,猜测为未定义行为>_<
+一般而言,声明有返回值的函数缺少返回值编译器会报warning,但是warning报的太多了没看见:D
 
 - `const char *`
 ```cpp
@@ -127,4 +127,9 @@ message": "invalid conversion from 'const BitSet::bits<500>::storage_type*' {aka
 ,没有发现一遗漏,但是调试时发现,` if(op=="dec"){`没有进入选择,仔细看警告信息发现字面常量字符串
 之间比较实际上是在比较地址,但是这是一个未定义行为,gcc,clang 等编译器会比较字符串而得出正确答案,而
 msvc则不会,故错误,这也是之后选择std::string的原因
-PS:当时还在奇怪为什么一样的代码前几天还好端端的(用的VScode),突然就崩了
+
+当时还在奇怪为什么一样的代码前几天还好端端的(用的VScode),突然就崩了
+
+### Wait to be implement 
+* 溢出处理
+* 除法优化: 特化10的除法,

@@ -945,7 +945,12 @@ namespace Uint{
         void operator -=(const uint & y) {
             // LifetimeTracker lt("operator -=");
             bool BorrowBit=false;
+
+            // --OH--
+
             for(auto i=0,end=this->getSizeOfBit();i<end;i++)
+			// auto end=this->getSizeOfBit();
+            // for(auto i=0;i<end;i++)
             {
                 bool val_x=(this->test(i));
                 bool val_y=y.test(i);
@@ -974,7 +979,8 @@ namespace Uint{
             {
                 rem<<=1;
                 rem[0]=*it;
-                if(rem.BiggerOrEqual(divisor))
+                // if(rem.BiggerOrEqual(divisor))
+                if(rem>=divisor)
                 {
                     rem=rem-divisor;
                     quo[it-divi.begin()]=1;
@@ -1067,7 +1073,7 @@ namespace Uint{
         friend std::ostream &operator<<(std::ostream &out, uint &x)
         {
             // out<<x.to_number("dec");
-            std::string s=x.to_number("dec");
+            std::string s=x.OstreamString();
             out<<s;
             return out;
         }
