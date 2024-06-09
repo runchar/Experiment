@@ -45,10 +45,10 @@ int main()
             std::cout << a * b << "\n";
             break;
         case '/':
-            std::cout << (a / b).first << "\n";
+            std::cout << a / b << "\n";
             break;
         case '%':
-            std::cout << (a / b).second << "\n";
+            std::cout << a % b<< "\n";
             break;
         default:
             break;

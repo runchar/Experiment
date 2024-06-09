@@ -989,28 +989,16 @@ namespace Uint
         }
         // overflow deal same with unsigned integer
 
-        std::pair<uint, uint> operator/(const uint &divisor) const
+        uint operator/(const uint &divisor) const
         {
             // LifetimeTracker lt;
-            uint divi (*this);
-            uint quo;
-            uint rem;
-            long long end = divi.getSizeOfBit();
-            for (long long i = end - 1; i >= 0; i--)
-            {
-                rem <<= 1;
-                rem[0] = divi.test(i);
-                if (rem >= divisor)
-                {
-                    rem -= divisor;
-                    quo[i] = 1;
-                }
-                else
-                {
-                    quo[i] = 0;
-                }
-            }
-            return {quo, rem};
+            return this->div(divisor).first;
+        }
+
+        uint operator%(const uint &divisor) const
+        {
+            // LifetimeTracker lt;
+            return this->div(divisor).second;
         }
 
         uint operator*(const uint &y) const
@@ -1087,6 +1075,30 @@ namespace Uint
                 }
             }
             return rem;
+        }
+
+        std::pair<uint, uint> div(const uint &divisor) const
+        {
+            // LifetimeTracker lt;
+            uint divi (*this);
+            uint quo;
+            uint rem;
+            long long end = divi.getSizeOfBit();
+            for (long long i = end - 1; i >= 0; i--)
+            {
+                rem <<= 1;
+                rem[0] = divi.test(i);
+                if (rem >= divisor)
+                {
+                    rem -= divisor;
+                    quo[i] = 1;
+                }
+                else
+                {
+                    quo[i] = 0;
+                }
+            }
+            return {quo, rem};
         }
 
         friend std::ostream &operator<<(std::ostream &out, const uint &x)

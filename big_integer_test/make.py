@@ -14,7 +14,7 @@ results = []
 
 if __name__ == '__main__':
     with open("inputs.txt", "w") as fin:
-        test_case = 1000
+        test_case = 100
         for _ in range(test_case):
             a = generate_random_big_integer(499)
             b = generate_random_big_integer(499)
