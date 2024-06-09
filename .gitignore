@@ -7,5 +7,5 @@
 *.out
 *.fls
 *.fdb_latexmk
-build/
-cmake-build-debug/
+build
+cmake-build-debug
