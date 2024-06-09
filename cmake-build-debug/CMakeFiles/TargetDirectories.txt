@@ -1,3 +1,0 @@
-F:/WorkSpace/OOP/Experiment2/Experiment/cmake-build-debug/CMakeFiles/Experiment.dir
-F:/WorkSpace/OOP/Experiment2/Experiment/cmake-build-debug/CMakeFiles/edit_cache.dir
-F:/WorkSpace/OOP/Experiment2/Experiment/cmake-build-debug/CMakeFiles/rebuild_cache.dir

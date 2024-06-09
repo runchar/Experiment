@@ -7,23 +7,40 @@
 #include <algorithm>
 #include <chrono>
 
-class  LifetimeTracker {
+#ifdef __GUNC__
+#define unlikely(x) __builtin_expect(!!(x), 0)
+#define likely(x) __builtin_expect(!!(x), 1)
+#else
+#define likely(x) (x)
+#define unlikely(x) (x)
+#endif
+
+
+class LifetimeTracker
+{
 private:
     static int cnt;
     std::chrono::high_resolution_clock::time_point s;
     std::chrono::steady_clock::time_point e;
-    const char * name;
+    const char *name;
 
 public:
-     LifetimeTracker(const char* name){s = std::chrono::high_resolution_clock::now();  this->name=name; cnt++;}
-
-    ~ LifetimeTracker() {
-        auto e = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(e - s).count();
-        printf("Object %s  Lifetime:   %lf   ms  \n",name, duration*1000);
+    LifetimeTracker(const char *name)
+    {
+        s = std::chrono::high_resolution_clock::now();
+        this->name = name;
+        cnt++;
     }
 
-    static void  GetCnt() {
+    ~LifetimeTracker()
+    {
+        auto e = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(e - s).count();
+        printf("Object %s  Lifetime:   %lf   ms  \n", name, duration * 1000);
+    }
+
+    static void GetCnt()
+    {
         printf("The object has been invoked %d times\n", cnt);
     }
 };
@@ -34,9 +51,9 @@ namespace BitSet
     class bit_reference
     {
         using storage_type = typename origin::storage_type;
-        using storage_pointer = typename origin::storage_pointer; // why???
+        using storage_pointer = typename origin::storage_pointer;
         storage_pointer seg = nullptr;
-        storage_type mask; // complement
+        storage_type mask; 
 
         friend origin;
         bit_reference(storage_pointer _seg, storage_type _mask) : seg(_seg), mask(_mask) {}
@@ -117,9 +134,9 @@ namespace BitSet
     class bit_iterator
     {
         using storage_type = typename origin::storage_type;
-//        using storage_pointer = typename std::conditional_t<is_const, const typename origin::storage_pointer, typename origin::storage_pointer>;
-//question ??
-		using storage_pointer = typename std::conditional_t<is_const,typename origin::const_storage_pointer, typename origin::storage_pointer>;
+        //        using storage_pointer = typename std::conditional_t<is_const, const typename origin::storage_pointer, typename origin::storage_pointer>;
+        // question ??
+        using storage_pointer = typename std::conditional_t<is_const, typename origin::const_storage_pointer, typename origin::storage_pointer>;
         // using storage_pointer = typename std::conditional_t<is_const,typename const origin::storage_pointer, typename origin::storage_pointer>;
         // tags of a random access iterator
     public:
@@ -244,14 +261,14 @@ namespace BitSet
             return *this;
         }
 
-        bit_iterator operator+(int n)  //it+n
+        bit_iterator operator+(int n) // it+n
         {
             bit_iterator temp = *this;
             return temp += n;
         }
         template <class o, bool ic>
-        friend bit_iterator<o, ic> operator + (int n , bit_iterator<o, ic> it);
-//        friend bit_iterator<origin, false> operator + (int n , bit_iterator<origin, false> it);
+        friend bit_iterator<o, ic> operator+(int n, bit_iterator<o, ic> it);
+        //        friend bit_iterator<origin, false> operator + (int n , bit_iterator<origin, false> it);
 
         bit_iterator operator-(int n)
         {
@@ -266,7 +283,7 @@ namespace BitSet
 
         reference operator[](size_t p)
         {
-            return *(*this+p);
+            return *(*this + p);
         }
 
         bool operator==(const bit_iterator &it) const
@@ -297,20 +314,19 @@ namespace BitSet
         friend bit_iterator<origin, false>;
         friend origin;
 
-        explicit bit_iterator (storage_pointer _seg, unsigned int _offset) : seg(_seg), offset(_offset) {}
+        explicit bit_iterator(storage_pointer _seg, unsigned int _offset) : seg(_seg), offset(_offset) {}
     };
 
     template <class origin>
     bit_iterator<origin, false> operator+(int n, bit_iterator<origin, false> it)
     {
-        return it+=n;
+        return it += n;
     }
-
 
     template <class origin>
     bit_iterator<origin, true> operator+(int n, bit_iterator<origin, true> it)
     {
-        return it+=n;
+        return it += n;
     }
 
     template <size_t N>
@@ -319,10 +335,11 @@ namespace BitSet
     public:
         using storage_type = size_t;
         using storage_pointer = storage_type *;
-		using const_storage_pointer = const storage_type *;
+        using const_storage_pointer = const storage_type *;
         using ULL = unsigned long long;
         static const ULL length = sizeof(storage_type) * 8; // length of storage_type in bits
         storage_type bitset[N];
+
     protected:
         ULL SizeOfType = 0; // size of storage_type
         size_t SizeOfBit;   // size of bitset in bits// uesd to judge if beyond
@@ -337,8 +354,8 @@ namespace BitSet
         // friend
         friend class bit_reference<bits<N>>;
         friend class bit_const_reference<bits<N>>;
-        friend class bit_iterator<bits<N>,false>;
-        friend class bit_iterator<bits<N>,true>;
+        friend class bit_iterator<bits<N>, false>;
+        friend class bit_iterator<bits<N>, true>;
         // friend class uint<bits<N>>
 
         template <size_t M>
@@ -371,12 +388,13 @@ namespace BitSet
             return bit_iterator<bits<N>, false>(bitset + p / length, p % length);
         }
 
-        const_iterator make_iter(size_t p)const {
+        const_iterator make_iter(size_t p) const
+        {
             return bit_iterator<bits<N>, true>(bitset + p / length, p % length);
         }
 
         // const_iterator make_citer(size_t p) const {
-        //     //            return bit_iterator<bits<N>, true>(bitset + p / length, p % length);
+        //     // return bit_iterator<bits<N>, true>(bitset + p / length, p % length);
         //     // Linear Algebra test like a shit QAQ --5.12
         //     // bit_iterator<bits<N>, true> const cit = bit_iterator<bits<N>, false>(bitset + p / length, p % length);
         //     bit_iterator<bits<N>, true> cit=make_iter(p);
@@ -469,8 +487,8 @@ namespace BitSet
         member functions
         */
 
-        bool test(size_t p)  const
-        { 
+        bool test(size_t p) const
+        {
             return (bitset[p / length] & (size_t(1) << (p % length)));
         }
 
@@ -479,8 +497,6 @@ namespace BitSet
             size_t cnt = 0;
             for (ULL i = 0; i < SizeOfBit; i++)
             {
-                // if(bitset[i/length] & (size_t(1)<<(i%length)))
-                //     cnt++;
                 // if(this->operator[](i)) //anotherd way to implement by using `this` pointer
                 // cnt++;              //`this` point to the object itself
                 if (test(i))
@@ -545,7 +561,7 @@ namespace BitSet
             return *this;
         }
 
-        void flip(size_t p,bool x)
+        void flip(size_t p, bool x)
         {
             {
                 if (x)
@@ -590,22 +606,12 @@ namespace BitSet
             // I think it has no ues
         }
 
-         bool BiggerOrEqual(const bits &y)
-        {
-            for (ULL i = 0; i < SizeOfType; i++) 
-            {                                    
-                if (bitset[i] < y.bitset[i])
-                    return false;
-            }
-            return true;
-        }
-
         std::string to_string() const
         {
             std::string s;
             for (long long i = SizeOfBit - 1; i >= 0; i--)
             {
-                if(test(i))
+                if (test(i))
                     s.push_back('1');
                 else
                     s.push_back('0');
@@ -623,19 +629,18 @@ namespace BitSet
             return make_iter(0);
         }
 
-        const_iterator cbegin()const {
+        const_iterator cbegin() const
+        {
             return make_iter(0);
         }
-        
 
         iterator end()
         {
-            // std::cout<<"SizeOfBit:  "<<SizeOfBit<<std::endl;
             return make_iter(SizeOfBit);
         }
 
-        const_iterator cend()
-        const {
+        const_iterator cend() const
+        {
             return make_iter(SizeOfBit);
         }
 
@@ -652,7 +657,6 @@ namespace BitSet
                     std::cout << 1;
                 else
                     std::cout << 0;
-                // std::cout<<std::endl;
             }
             std::cout << std::endl;
         }
@@ -670,9 +674,7 @@ namespace BitSet
             return make_ref(p);
         }
 
-        // overload operator=
-
-		bits &operator=(const bits &y)
+        bits &operator=(const bits &y)
         {
             if (this == &y)
                 return *this;
@@ -777,18 +779,17 @@ namespace BitSet
 
         ULL getSizeOfType() const { return SizeOfType; }
         ULL getSizeOfBit() const { return SizeOfBit; }
-		// const storage_pointer getBitset()  {return bitset;}
     };
 
     template <size_t N>
     std::strong_ordering operator<=>(const bits<N> &x, const bits<N> &y)
     {
-        long long end=x.getSizeOfType()-1;
-        for(long long i=end;i>=0;i--)
+        long long end = x.getSizeOfType() - 1;
+        for (long long i = end; i >= 0; i--)
         {
-            if(x.bitset[i]>y.bitset[i])
+            if (x.bitset[i] > y.bitset[i])
                 return std::strong_ordering::greater;
-            else if(x.bitset[i]<y.bitset[i])
+            else if (x.bitset[i] < y.bitset[i])
                 return std::strong_ordering::less;
         }
         return std::strong_ordering::equal;
@@ -851,352 +852,261 @@ namespace BitSet
     }
 }
 
-namespace Uint{
-	using namespace BitSet;
+namespace Uint
+{
+    using namespace BitSet;
     using ULL = unsigned long long;
-	template <size_t N>
-	class uint : public bits<N>{
+    template <size_t N>
+    class uint : public bits<N>
+    {
     public:
-
         uint(){};
 
-		uint(ULL n){
-			bits<N> tmp(n);
-			*this=tmp;
-		}
-
-        uint(const char *s, size_t n, char zero, char one){
-            bits<N> tmp(s,n,zero,one);
-            *this=tmp;
+        uint(ULL n)
+        {
+            bits<N> tmp(n);
+            *this = tmp;
         }
 
-        uint(std::string s){
+        uint(const char *s, size_t n, char zero, char one)
+        {
+            bits<N> tmp(s, n, zero, one);
+            *this = tmp;
+        }
+
+        uint(std::string s)
+        {
             std::string ans0;
-            long long  cnt=0;
-            while(s.size())
+            long long cnt = 0;
+            while (s.size())
             {
                 std::string tmp;
-                int len=s.length(),r=0;
-                for(int i=0;i<len;i++){
-                    r=r*10+s[i]-'0';
-                    if(!(tmp.length()==0&&r<2)){
-                        tmp+=r/2+'0';
-                        r=r%2;
+                long long len = s.length(), r = 0;
+                for (long long i = 0; i < len; i++)
+                {
+                    r = r * 10 + s[i] - '0';
+                    if (!(tmp.length() == 0 && r < 2))
+                    {
+                        tmp += r / 2 + '0';
+                        r = r % 2;
                     }
                 }
-                s=tmp;
-                this->flip(cnt++,r);
+                s = tmp;
+                this->flip(cnt++, r);
             }
         }
 
-        uint(const uint &x){
+        uint(const uint &x)
+        {
             this->SizeOfType = x.getSizeOfType();
-			this->SizeOfBit = x.getSizeOfBit();
-			memcpy(this->bitset,x.bitset,N/8+1);
+            this->SizeOfBit = x.getSizeOfBit();
+            memcpy(this->bitset, x.bitset, N / 8 + 1);
         }
 
-        ~uint()=default;
+        ~uint() = default;
 
-        uint &operator = (const BitSet::bits<N> &x) {
+        uint &operator=(const BitSet::bits<N> &x)
+        {
             this->SizeOfType = x.getSizeOfType();
-			this->SizeOfBit = x.getSizeOfBit();
-			memcpy(this->bitset,x.bitset,N/8+1);
+            this->SizeOfBit = x.getSizeOfBit();
+            memcpy(this->bitset, x.bitset, N / 8 + 1);
             return *this;
-        } 
+        }
 
-        uint operator +=(const uint & y) {
-            size_t maxx=0;
-            maxx=~maxx;
-            size_t carry=0;
-            for(long long i=0;i<y.getSizeOfType();i++)
+        uint operator+=(const uint &y)
+        {
+            size_t maxx = 0;
+            maxx = ~maxx;
+            size_t carry = 0;
+            long long end = this->getSizeOfType();
+            for (long long i = 0; i < end ; i++)
             {
-                if(maxx-this->bitset[i]<y.bitset[i]+carry||maxx-y.bitset[i]<this->bitset[i]+carry||this->bitset[i]+y.bitset[i]+carry>maxx)
+                if (unlikely(maxx - this->bitset[i] < y.bitset[i] + carry || maxx - y.bitset[i] < this->bitset[i] + carry || this->bitset[i] + y.bitset[i] + carry > maxx))
                 {
-                    this->bitset[i]=this->bitset[i]+y.bitset[i]+carry-maxx-1;
-                    carry=1;
-                }else{
-                    this->bitset[i]=this->bitset[i]+y.bitset[i]+carry;
-                    carry=0;
+                    this->bitset[i] = this->bitset[i] + y.bitset[i] + carry - maxx - 1;
+                    carry = 1;
+                }
+                else
+                {
+                    this->bitset[i] = this->bitset[i] + y.bitset[i] + carry;
+                    carry = 0;
                 }
             }
             return *this;
-
-			return *this;
         }
 
-        uint operator +(const uint & y) const{
-            uint tmp=*this;
-            return tmp+=y;
+        uint operator+(const uint &y) const
+        {
+            uint tmp(*this);
+            return tmp += y;
         }
 
-        uint operator +(const ULL & y) const{
+        uint operator+(const ULL &y) const
+        {
             uint tmp(y);
-            return *this+tmp;
+            return *this + tmp;
         }
 
-        uint operator +(std::string y) const{
+        uint operator+(std::string y) const
+        {
             uint tmp(y);
-            uint tmp2=*this;
-            return tmp2+tmp;
+            uint tmp2(*this);
+            return tmp2 += tmp;
         }
 
-        uint operator -(const uint & y) const{
-            uint tmp=*this;
-            return tmp-=y;
+        uint operator-(const uint &y) const
+        {
+            uint tmp(*this);
+            return tmp -= y;
         }
 
-        uint operator -=(const uint & y) {
+        uint operator-=(const uint &y)
+        {
             // LifetimeTracker lt("operator -=");
-            bool BorrowBit=false;
-
+            bool BorrowBit = false;
             // --OH--
-
-            for(auto i=0,end=this->getSizeOfBit();i<end;i++)
+            long long end = this->getSizeOfBit();
+            for (auto i = 0; i < end; i++)
             {
-                bool val_x=(this->test(i));
-                bool val_y=y.test(i);
-                this->flip(i,(val_x^val_y^BorrowBit));      
-                BorrowBit=(~val_x&val_y)|((~val_x|val_y)&BorrowBit);       
+                bool val_x = (this->test(i));
+                bool val_y = y.test(i);
+                this->flip(i, (val_x ^ val_y ^ BorrowBit));
+                BorrowBit = (~val_x & val_y) | ((~val_x | val_y) & BorrowBit);
             }
             return *this;
         }
 
-        uint operator -(const ULL & y) const{
+        uint operator-(const ULL &y) const
+        {
             uint tmp(y);
-            return *this-tmp;
+            return *this - tmp;
         }
 
-        uint operator -(const std::string & y) const{
+        uint operator-(const std::string &y) const
+        {
             uint tmp(y);
-            return *this-tmp;
+            return *this - tmp;
         }
         // overflow deal same with unsigned integer
 
-        std::pair<uint,uint> operator /(const uint & divisor) const{
+        std::pair<uint, uint> operator/(const uint &divisor) const
+        {
             // LifetimeTracker lt;
-            uint divi = *this;
+            uint divi (*this);
             uint quo;
             uint rem;
-            long long end=divi.getSizeOfBit();
-            for(long long i=end-1;i>=0;i--)
+            long long end = divi.getSizeOfBit();
+            for (long long i = end - 1; i >= 0; i--)
             {
-                rem<<=1;
-                rem[0]=divi.test(i);
-                if(rem>=divisor)
+                rem <<= 1;
+                rem[0] = divi.test(i);
+                if (rem >= divisor)
                 {
-                    rem=rem-divisor;
-                    quo[i]=1;
-                }else{
-                    quo[i]=0;
+                    rem -= divisor;
+                    quo[i] = 1;
+                }
+                else
+                {
+                    quo[i] = 0;
                 }
             }
-            return {quo,rem};
+            return {quo, rem};
         }
 
-        int div_tran() {
-            // LifetimeTracker it("div_tran");
-            int rem=0;
-            for(long long i=this->getSizeOfBit()-1; i>=0;i--)
-            {
-                rem<<=1;
-                if(this->test(i))
-                    rem++;
-                if(rem>=10)
-                {
-                    rem-=10;
-                    this->flip(i,1);
-                }else{
-                    this->flip(i,0);
-                }
-            }
-            return  rem;
-        }
-
-        uint operator *(const uint & y) const{
+        uint operator*(const uint &y) const
+        {
             uint tmp;
 
-            long long end=this->getSizeOfBit();
-            for(long long i=0;i<end;i++)
+            long long end = this->getSizeOfBit();
+            for (long long i = 0; i < end; i++)
             {
-                if(this->test(i))
+                if (this->test(i))
                 {
-                    uint tmp2=y;
-                    tmp2<<=i;
-                    tmp+=tmp2;
+                    uint tmp2 = y;
+                    tmp2 <<= i;
+                    tmp += tmp2;
                 }
             }
             return tmp;
         }
 
-        std::string to_number( const char *op ) const {
-            if(op==std::string("dec"))
+        std::string to_number(const char *op) const   //translate to oct number
+        {
+            if (op == std::string("dec"))
             {
                 uint stan(10);
-                uint x=*this;
+                uint x (*this);
                 std::string num;
-                while(x>stan)  //O(N <)
+                while (x > stan) // O(N <)
                 {
-                    int num_tmp=x.div_tran();   
-                    num+=(char)(num_tmp+'0');
+                    int num_tmp = x.div_tran();
+                    num += (char)(num_tmp + '0');
                 }
-                int num_tmp=std::stoi(x.to_string(),nullptr,2);
-                if(num_tmp==10)
+                int num_tmp = std::stoi(x.to_string(), nullptr, 2);
+                if (num_tmp == 10)
                 {
-                    num+="01";
-                }else{
-                    num+=(char)(num_tmp+'0');
+                    num += "01";
+                }
+                else
+                {
+                    num += (char)(num_tmp + '0');
                 }
                 std::reverse(num.begin(), num.end());
                 return num;
             }
 
-            if(op==std::string("bin"))
+            if (op == std::string("bin"))
             {
                 return this->to_string();
             }
-
-            if(op==std::string("hex"))
-            {
-                std::string hex;
-                /*
-                    wait to be implemented
-                */
-                std::reverse(hex.begin(), hex.end());
-                return hex;
-            }
         }
 
-		virtual std::string OstreamString() const{
-			return this->to_number("dec");
-		}
+        virtual std::string OstreamString() const
+        {
+            return this->to_number("dec");
+        }
 
     private:
-        friend std::ostream &operator<<(std::ostream &out, uint &x)
+        int div_tran() //special div 10 function
         {
-            // out<<x.to_number("dec");
-            std::string s=x.OstreamString();
-            out<<s;
+            // LifetimeTracker it("div_tran");
+            int rem = 0;
+            for (long long i = this->getSizeOfBit() - 1; i >= 0; i--)
+            {
+                rem <<= 1;
+                if (this->test(i))
+                    rem++;
+                if (rem >= 10)
+                {
+                    rem -= 10;
+                    this->flip(i, 1);
+                }
+                else
+                {
+                    this->flip(i, 0);
+                }
+            }
+            return rem;
+        }
+
+        friend std::ostream &operator<<(std::ostream &out, const uint &x)
+        {
+            // std::string s = x.OstreamString();
+            std::string s(x.OstreamString());
+            out << s;
             return out;
         }
 
-        friend std::istream &operator>>(std::istream &in, uint &x)
+        friend std::istream &operator>>(std::istream &in,uint &x)
         {
             std::string s;
-            if(in>>s)
+            if (in >> s)
             {
-                x=uint(s);
-            }else throw std::runtime_error("invalid_input");
+                x = uint(s);
+            }
+            else
+                throw std::runtime_error("invalid_input");
             return in;
         }
     };
 }
-
-/*
-//Fixed-length unsigned floating point type
-namespace Ufloat{
-    using namespace Uint;
-    using ULL = unsigned long long;
-    using exp_type =  long long;
-    template<size_t N>
-    class ufloat : public uint<N*2>{
-	    public:
-			exp_type  exp;
-		public:
-            ufloat(){
-                exp = 0;
-            }
-
-            ufloat(ULL n){
-                Uint::uint<N> tmp(n);
-                *this = tmp;
-                exp = 0;
-            }
-
-            ufloat(const char *s, size_t n, char zero, char one){
-                Uint::uint<N> tmp(s,n,zero,one);
-                *this = tmp;
-                exp = 0;
-            }
-
-            ufloat(std::string s){
-                Uint::uint<N> tmp(s);
-                *this = tmp;
-                exp = 0;
-            }
-
-            ufloat(const ufloat &y){
-                Uint::uint<N> tmp(y);
-                *this = tmp;
-                exp = y.exp;
-            }
-
-            ~ufloat() = default;
-
-            ufloat &operator = (Uint::uint<N> &x) {
-                this->SizeOfType = x.getSizeOfType();
-                this->SizeOfBit = x.getSizeOfBit();
-                memcpy(this->bitset,x.getBitset(),N/8+1);
-                exp = 0;
-                return *this;
-            }
-
-            friend void align(ufloat &x,ufloat &y){
-                if(x.exp>y.exp)
-                {
-                    x<<=(x.exp-y.exp);
-                    x.exp=y.exp;
-                }else{
-                    y<<=(y.exp-x.exp);
-                    y.exp=x.exp;
-                }
-            }
-
-            void ZeroClear(){
-                exp_type cnt=0;
-                for(auto it=this->begin();it!=this->end();it++)
-                {
-                    if(static_cast<bool>(*it)==0)
-                    {
-                        cnt++;
-                    }else{
-                        break;  
-                    }
-                }
-                this->exp+=cnt;
-                *this>>=cnt;
-            }
-
-            ufloat operator +(const ufloat & y) const{
-                ufloat tmpx=*this;
-                ufloat tmpy=y;
-                align(tmpx,tmpy);
-				ufloat tmp;
-				tmp.exp=tmpx.exp;
-				auto it=tmp.begin();
-				auto itx=this->cbegin();
-				auto ity=y.cbegin();
-                bool CarryBit=false;
-                for(auto end=tmp.end();it!=end;it++,itx++,ity++)
-                {
-                    bool val_x=static_cast<bool>(*itx);
-                    bool val_y=static_cast<bool>(*ity);
-                    (*it)=(bool)(val_x^val_y^CarryBit);
-                    CarryBit=(val_x&val_y)||(val_x&CarryBit)||(CarryBit&val_y);
-                }
-                tmp.ZeroClear();
-                return tmp;
-            }
-
-            ufloat operator +(const ULL & y) const{
-                ufloat tmp(y);
-                return *this+tmp;
-            }
-
-            ufloat operator +(std::string y) const{
-                ufloat tmp(y);
-                return *this+tmp;
-            }
-
-    };
-}
-*/
